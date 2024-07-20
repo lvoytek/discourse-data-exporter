@@ -1,6 +1,12 @@
 package main
 
-import "github.com/alecthomas/kingpin/v2"
+import (
+	"strings"
+	"time"
+
+	"github.com/alecthomas/kingpin/v2"
+	"github.com/lvoytek/discourse_client_go/pkg/discourse"
+)
 
 func main() {
 	var (
@@ -15,4 +21,12 @@ func main() {
 	)
 
 	kingpin.Parse()
+
+	discourseClient := discourse.NewAnonymousClient(*discourseSiteURL)
+
+	if *dataCollectOnce {
+		Collect(discourseClient, strings.Split(strings.TrimSpace(*discourseCategoryList), ","))
+	} else {
+		go IntervalCollect(discourseClient, strings.Split(strings.TrimSpace(*discourseCategoryList), ","), time.Duration(*dataCollectionInterval)*time.Second)
+	}
 }
