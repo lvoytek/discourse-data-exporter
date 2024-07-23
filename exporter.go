@@ -33,6 +33,7 @@ func topicMapToTopicComments(topics map[string]map[int]*discourse.TopicData) (to
 				topicComments = append(topicComments, TopicCommentsEntry{
 					category_slug: category_slug,
 					topic_id:      topic_id,
+					post_id:       post.ID,
 					creation_time: post.CreatedAt,
 					update_time:   post.UpdatedAt,
 					username:      post.Username,
