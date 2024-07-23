@@ -16,13 +16,19 @@ func main() {
 		dataCollectionInterval = kingpin.Flag("data.collection-interval", "Time in seconds to wait before collecting new data from the Discourse site.").Default("3600").Int()
 		exportType             = kingpin.Flag("data.export-type", "How to export the data: csv, json, or mysql").Default("csv").String()
 		mysqlServerURL         = kingpin.Flag("mysql.database-url", "The location of the database to export to in mysql mode.").Default("localhost:3306").String()
-		mysqlUser              = kingpin.Flag("mysql.username", "The MySQL user to use for inputting data in mysql mode.").String()
+		mysqlUsername          = kingpin.Flag("mysql.username", "The MySQL user to use for inputting data in mysql mode.").String()
 		mysqlPassword          = kingpin.Flag("mysql.password", "The password for the MySQL user to use in mysql mode.").String()
 	)
 
 	kingpin.Parse()
 
 	discourseClient := discourse.NewAnonymousClient(*discourseSiteURL)
+
+	exporterErr := InitExporter(*exportType, *mysqlServerURL, *mysqlUsername, *mysqlPassword)
+
+	if exporterErr != nil {
+		panic(exporterErr)
+	}
 
 	if *dataCollectOnce {
 		Collect(discourseClient, strings.Split(strings.TrimSpace(*discourseCategoryList), ","))
