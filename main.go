@@ -31,8 +31,17 @@ func main() {
 	}
 
 	if *dataCollectOnce {
-		Collect(discourseClient, strings.Split(strings.TrimSpace(*discourseCategoryList), ","))
+		discourseData := Collect(discourseClient, strings.Split(strings.TrimSpace(*discourseCategoryList), ","))
+		ExportAll(discourseData, *exportType)
 	} else {
-		go IntervalCollect(discourseClient, strings.Split(strings.TrimSpace(*discourseCategoryList), ","), time.Duration(*dataCollectionInterval)*time.Second)
+		go IntervalCollectAndExport(discourseClient, *exportType, strings.Split(strings.TrimSpace(*discourseCategoryList), ","), time.Duration(*dataCollectionInterval)*time.Second)
+	}
+}
+
+func IntervalCollectAndExport(discourseClient *discourse.Client, exportType string, categoryList []string, interval time.Duration) {
+	for {
+		discourseData := Collect(discourseClient, categoryList)
+		ExportAll(discourseData, exportType)
+		time.Sleep(interval)
 	}
 }

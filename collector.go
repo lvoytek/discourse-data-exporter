@@ -3,25 +3,21 @@ package main
 import (
 	"log"
 	"sync"
-	"time"
 
 	"github.com/lvoytek/discourse_client_go/pkg/discourse"
 )
 
-// Cache data used to avoid unnecessary Discourse API calls
-var (
-	// Cache of topics labelled by category slug and topic id
-	topicsCache = map[string]map[int]*discourse.TopicData{}
-)
-
-func IntervalCollect(discourseClient *discourse.Client, categoryList []string, interval time.Duration) {
-	for {
-		Collect(discourseClient, categoryList)
-		time.Sleep(interval)
-	}
+type DiscourseCache struct {
+	// Topics mapped by category slug and topic ID
+	Topics map[string]map[int]*discourse.TopicData
 }
 
-func Collect(discourseClient *discourse.Client, categoryList []string) {
+// Cache data used to avoid unnecessary Discourse API calls
+var (
+	cache DiscourseCache
+)
+
+func Collect(discourseClient *discourse.Client, categoryList []string) DiscourseCache {
 	var collectorWg sync.WaitGroup
 
 	for _, categorySlug := range categoryList {
@@ -30,11 +26,13 @@ func Collect(discourseClient *discourse.Client, categoryList []string) {
 	}
 
 	collectorWg.Wait()
+
+	return cache
 }
 
 func collectTopicsFromCategory(wg *sync.WaitGroup, discourseClient *discourse.Client, categorySlug string) {
 	defer wg.Done()
-	topics, ok := topicsCache[categorySlug]
+	topics, ok := cache.Topics[categorySlug]
 
 	if !ok {
 		topics = map[int]*discourse.TopicData{}
@@ -67,6 +65,6 @@ func collectTopicsFromCategory(wg *sync.WaitGroup, discourseClient *discourse.Cl
 	}
 
 	if len(topics) > 0 {
-		topicsCache[categorySlug] = topics
+		cache.Topics[categorySlug] = topics
 	}
 }

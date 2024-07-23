@@ -14,6 +14,10 @@ func InitExporter(exportType string, mysqlServerURL string, mysqlUsername string
 	return fmt.Errorf("Invalid Exporter Type: %s", exportType)
 }
 
+func ExportAll(cache DiscourseCache, exportType string) {
+
+}
+
 func ExportTopicComments(topics map[string]map[int]*discourse.TopicData, exportType string) {
 	topicComments := topicMapToTopicComments(topics)
 
