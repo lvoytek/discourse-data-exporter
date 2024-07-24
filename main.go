@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"strings"
 	"time"
 
@@ -27,7 +28,7 @@ func main() {
 	exporterErr := InitExporter(*exportType, *mysqlServerURL, *mysqlUsername, *mysqlPassword)
 
 	if exporterErr != nil {
-		panic(exporterErr)
+		log.Fatal(exporterErr)
 	}
 
 	if *dataCollectOnce {
