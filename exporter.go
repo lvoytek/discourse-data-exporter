@@ -15,7 +15,7 @@ func InitExporter(exportType string, mysqlServerURL string, mysqlUsername string
 }
 
 func ExportAll(cache DiscourseCache, exportType string) {
-
+	ExportTopicComments(cache.Topics, exportType)
 }
 
 func ExportTopicComments(topics map[string]map[int]*discourse.TopicData, exportType string) {
