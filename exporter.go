@@ -17,7 +17,7 @@ func InitExporter(exportType string, mysqlServerURL string, mysqlUsername string
 		return InitializeMySQLDatabase()
 	}
 
-	return fmt.Errorf("Invalid Exporter Type: %s", exportType)
+	return fmt.Errorf("invalid exporter type: %s", exportType)
 }
 
 func ExportAll(cache DiscourseCache, exportType string) {

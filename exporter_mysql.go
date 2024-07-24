@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"time"
 
@@ -25,7 +26,7 @@ func ConnectMySQL(serverURL string, username string, password string) error {
 	mysqlDB, err = sql.Open("mysql", mysqlCfg.FormatDSN())
 
 	if err != nil {
-		return err
+		return fmt.Errorf("mysql connection setup error: %v", err)
 	}
 
 	mysqlDB.SetConnMaxLifetime(time.Minute * 3)
@@ -33,14 +34,23 @@ func ConnectMySQL(serverURL string, username string, password string) error {
 	mysqlDB.SetMaxIdleConns(10)
 
 	err = mysqlDB.Ping()
-	return err
+
+	if err != nil {
+		return fmt.Errorf("mysql database ping error: %v", err)
+	}
+
+	return nil
 }
 
 func InitializeMySQLDatabase() error {
 	//Topic comments
 	_, err := mysqlDB.Exec("CREATE TABLE IF NOT EXISTS comments (post_id INT PRIMARY KEY, category_slug VARCHAR NOT NULL, topic_id INT NOT NULL, creation_time DATETIME NOT NULL, update_time DATETIME NOT NULL, username VARCHAR NOT NULL)")
 
-	return err
+	if err != nil {
+		return fmt.Errorf("comments table creation error: %v", err)
+	}
+
+	return nil
 }
 
 func ExportTopicCommentsMySQL(topicComments []TopicCommentsEntry) {
