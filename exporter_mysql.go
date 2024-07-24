@@ -15,11 +15,12 @@ var (
 
 func ConnectMySQL(serverURL string, username string, password string) error {
 	mysqlCfg := mysql.Config{
-		User:   username,
-		Passwd: password,
-		Net:    "tcp",
-		Addr:   serverURL,
-		DBName: "discourse",
+		User:      username,
+		Passwd:    password,
+		Net:       "tcp",
+		Addr:      serverURL,
+		DBName:    "discourse",
+		parseTime: true,
 	}
 
 	var err error
@@ -38,12 +39,17 @@ func ConnectMySQL(serverURL string, username string, password string) error {
 }
 
 func InitializeMySQLDatabase() {
+	//Topic comments
+	_, err := mysqlDB.exec("CREATE TABLE IF NOT EXISTS comments (post_id INT PRIMARY KEY, category_slug VARCHAR NOT NULL, topic_id INT NOT NULL, creation_time DATETIME NOT NULL, update_time DATETIME NOT NULL, username VARCHAR NOT NULL)")
 
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func ExportTopicCommentsMySQL(topicComments []TopicCommentsEntry) {
 	for _, topicComment := range topicComments {
-		_, err := mysqlDB.exec("INSERT INTO COMMENTS (category_slug, topic_id, post_id, creation_time, update_time, username) VALUES (?, ?, ?, ?, ?, ?)",
+		_, err := mysqlDB.exec("INSERT INTO comments (category_slug, topic_id, post_id, creation_time, update_time, username) VALUES (?, ?, ?, ?, ?, ?)",
 			topicComment.category_slug, topicComment.topic_id, topicComment.post_id, topicComment.creation_time, topicComment.update_time, topicComment.username)
 		if err != nil {
 			log.Printf("ExportTopicCommentsMySQL error: %v", err)
