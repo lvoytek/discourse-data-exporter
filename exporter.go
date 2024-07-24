@@ -8,7 +8,13 @@ import (
 
 func InitExporter(exportType string, mysqlServerURL string, mysqlUsername string, mysqlPassword string) error {
 	if exportType == "mysql" {
-		return ConnectMySQL(mysqlServerURL, mysqlUsername, mysqlPassword)
+		err := ConnectMySQL(mysqlServerURL, mysqlUsername, mysqlPassword)
+
+		if err != nil {
+			return err
+		}
+
+		return InitializeMySQLDatabase()
 	}
 
 	return fmt.Errorf("Invalid Exporter Type: %s", exportType)

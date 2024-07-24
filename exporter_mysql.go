@@ -38,13 +38,11 @@ func ConnectMySQL(serverURL string, username string, password string) error {
 	return err
 }
 
-func InitializeMySQLDatabase() {
+func InitializeMySQLDatabase() error {
 	//Topic comments
 	_, err := mysqlDB.exec("CREATE TABLE IF NOT EXISTS comments (post_id INT PRIMARY KEY, category_slug VARCHAR NOT NULL, topic_id INT NOT NULL, creation_time DATETIME NOT NULL, update_time DATETIME NOT NULL, username VARCHAR NOT NULL)")
 
-	if err != nil {
-		log.Fatal(err)
-	}
+	return err
 }
 
 func ExportTopicCommentsMySQL(topicComments []TopicCommentsEntry) {
