@@ -12,7 +12,7 @@ func main() {
 	var (
 		discourseSiteURL       = kingpin.Flag("discourse.site-url", "The URL of the Discourse site to collect metrics from.").Default("http://127.0.0.1:3000").String()
 		discourseCategoryList  = kingpin.Flag("discourse.limit-categories", "Comma separated list of category slugs to limit metrics to. All are enabled by default.").Default("").String()
-		dataCollectOnce        = kingpin.Flag("data.collect-once", "Only collect data once then exit.").Default(true).Boolean()
+		dataCollectOnce        = kingpin.Flag("data.collect-once", "Only collect data once then exit.").Default("false").Bool()
 		dataCollectionInterval = kingpin.Flag("data.collection-interval", "Time in seconds to wait before collecting new data from the Discourse site.").Default("3600").Int()
 		exportType             = kingpin.Flag("data.export-type", "How to export the data: csv, json, or mysql").Default("csv").String()
 		mysqlServerURL         = kingpin.Flag("mysql.database-url", "The location of the database to export to in mysql mode.").Default("localhost:3306").String()
