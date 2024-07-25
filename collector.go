@@ -14,7 +14,9 @@ type DiscourseCache struct {
 
 // Cache data used to avoid unnecessary Discourse API calls
 var (
-	cache           DiscourseCache
+	cache = DiscourseCache{
+		Topics: make(map[string]map[int]*discourse.TopicData),
+	}
 	cacheWriteMutex sync.Mutex
 )
 
