@@ -14,7 +14,8 @@ type DiscourseCache struct {
 
 // Cache data used to avoid unnecessary Discourse API calls
 var (
-	cache DiscourseCache
+	cache           DiscourseCache
+	cacheWriteMutex sync.Mutex
 )
 
 func Collect(discourseClient *discourse.Client, categoryList []string) DiscourseCache {
@@ -65,6 +66,8 @@ func collectTopicsFromCategory(wg *sync.WaitGroup, discourseClient *discourse.Cl
 	}
 
 	if len(topics) > 0 {
+		cacheWriteMutex.Lock()
+		defer cacheWriteMutex.Unlock()
 		cache.Topics[categorySlug] = topics
 	}
 }
