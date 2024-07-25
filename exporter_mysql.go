@@ -44,7 +44,7 @@ func ConnectMySQL(serverURL string, username string, password string) error {
 
 func InitializeMySQLDatabase() error {
 	//Topic comments
-	_, err := mysqlDB.Exec("CREATE TABLE IF NOT EXISTS comments (post_id INT PRIMARY KEY, category_slug VARCHAR NOT NULL, topic_id INT NOT NULL, creation_time DATETIME NOT NULL, update_time DATETIME NOT NULL, username VARCHAR NOT NULL)")
+	_, err := mysqlDB.Exec("CREATE TABLE IF NOT EXISTS comments (post_id INT PRIMARY KEY, category_slug TEXT NOT NULL, topic_id INT NOT NULL, creation_time DATETIME NOT NULL, update_time DATETIME NOT NULL, username VARCHAR(120) NOT NULL)")
 
 	if err != nil {
 		return fmt.Errorf("comments table creation error: %v", err)
