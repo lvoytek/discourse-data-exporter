@@ -41,15 +41,34 @@ func collectTopicsFromCategory(wg *sync.WaitGroup, discourseClient *discourse.Cl
 		topics = map[int]*discourse.TopicData{}
 	}
 
-	//TODO: Collect additional topics when there are more than 30
-	categoryData, err := discourse.GetCategoryContentsBySlug(discourseClient, categorySlug)
+	// Check each page of topics for category until there are no new topic bumps
+	page := 1
+	newTopics := []discourse.SuggestedTopic{}
+	for {
+		categoryData, err := discourse.GetCategoryContentsBySlug(discourseClient, categorySlug, page)
 
-	if err != nil {
-		log.Println("Category data collection error for", categorySlug, "-", err)
-		return
+		if err != nil {
+			log.Println("Category data collection error for", categorySlug, "on page", page, "-", err)
+			return
+		}
+
+		if len(categoryData.TopicList.Topics) == 0 {
+			break
+		}
+
+		newTopics = append(newTopics, categoryData.TopicList.Topics...)
+
+		// Check if final topic on this page has not been updated since last check
+		cachedCompareTopic, ok := topics[newTopics[len(newTopics)-1].ID]
+
+		if ok && cachedCompareTopic.LastPostedAt.Compare(newTopics[len(newTopics)-1].LastPostedAt) >= 0 {
+			break
+		}
+
+		page++
 	}
 
-	for _, topicOverview := range categoryData.TopicList.Topics {
+	for _, topicOverview := range newTopics {
 		cachedTopic, topicExists := topics[topicOverview.ID]
 
 		// If cached topic data exists, check if it actually needs to be updated
