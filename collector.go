@@ -10,12 +10,14 @@ import (
 type DiscourseCache struct {
 	// Topics mapped by category slug and topic ID
 	Topics map[string]map[int]*discourse.TopicData
+	Users  map[string]*discourse.User
 }
 
 // Cache data used to avoid unnecessary Discourse API calls
 var (
 	cache = DiscourseCache{
 		Topics: make(map[string]map[int]*discourse.TopicData),
+		Users:  make(map[string]*discourse.User),
 	}
 	cacheWriteMutex sync.Mutex
 )
@@ -25,7 +27,7 @@ func Collect(discourseClient *discourse.Client, categoryList []string) Discourse
 
 	for _, categorySlug := range categoryList {
 		collectorWg.Add(1)
-		go collectTopicsFromCategory(&collectorWg, discourseClient, categorySlug)
+		go collectTopicsAndUsersFromCategory(&collectorWg, discourseClient, categorySlug)
 	}
 
 	collectorWg.Wait()
@@ -33,7 +35,7 @@ func Collect(discourseClient *discourse.Client, categoryList []string) Discourse
 	return cache
 }
 
-func collectTopicsFromCategory(wg *sync.WaitGroup, discourseClient *discourse.Client, categorySlug string) {
+func collectTopicsAndUsersFromCategory(wg *sync.WaitGroup, discourseClient *discourse.Client, categorySlug string) {
 	defer wg.Done()
 	topics, ok := cache.Topics[categorySlug]
 
@@ -54,6 +56,11 @@ func collectTopicsFromCategory(wg *sync.WaitGroup, discourseClient *discourse.Cl
 
 		if len(categoryData.TopicList.Topics) == 0 {
 			break
+		}
+
+		// Add listed users to user map, overriding old data
+		for _, newUser := range categoryData.Users {
+			cache.Users[newUser.Username] = &newUser
 		}
 
 		newTopics = append(newTopics, categoryData.TopicList.Topics...)
