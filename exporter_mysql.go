@@ -43,11 +43,25 @@ func ConnectMySQL(serverURL string, username string, password string) error {
 }
 
 func InitializeMySQLDatabase() error {
-	//Topic comments
-	_, err := mysqlDB.Exec("CREATE TABLE IF NOT EXISTS comments (post_id INT PRIMARY KEY, category_slug TEXT NOT NULL, topic_id INT NOT NULL, creation_time DATETIME NOT NULL, update_time DATETIME NOT NULL, username VARCHAR(120) NOT NULL)")
+	// Users
+	_, err := mysqlDB.Exec("CREATE TABLE IF NOT EXISTS users (user_id INT PRIMARY KEY, creation_time DATETIME NOT NULL, username VARCHAR(120) NOT NULL, name VARCHAR(120), primary_group_name VARCHAR(120))")
+
+	if err != nil {
+		return fmt.Errorf("users table creation error: %v", err)
+	}
+
+	// Topic comments
+	_, err = mysqlDB.Exec("CREATE TABLE IF NOT EXISTS comments (post_id INT PRIMARY KEY, category_slug TEXT NOT NULL, topic_id INT NOT NULL, creation_time DATETIME NOT NULL, update_time DATETIME NOT NULL, username VARCHAR(120) NOT NULL, FOREIGN KEY (username) REFERENCES users(username))")
 
 	if err != nil {
 		return fmt.Errorf("comments table creation error: %v", err)
+	}
+
+	// Topic edits
+	_, err = mysqlDB.Exec("CREATE TABLE IF NOT EXISTS edits (topic_id INT, edit_number INT, category_slug TEXT NOT NULL, creation_time DATETIME NOT NULL, username VARCHAR(120) NOT NULL, primary key (topic_id, edit_number), FOREIGN KEY (username) REFERENCES users(username)))")
+
+	if err != nil {
+		return fmt.Errorf("edits table creation error: %v", err)
 	}
 
 	return nil
