@@ -23,7 +23,6 @@ type TopicEditsEntry struct {
 // Context Data
 type UserEntry struct {
 	user_id            int
-	creation_time      time.Time
 	username           string
 	name               string
 	primary_group_name string

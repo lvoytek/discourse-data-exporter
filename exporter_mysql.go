@@ -47,7 +47,6 @@ func InitializeMySQLDatabase() error {
 	_, err := mysqlDB.Exec("CREATE TABLE IF NOT EXISTS users " +
 		"(" +
 		"user_id INT PRIMARY KEY, " +
-		"creation_time DATETIME NOT NULL, " +
 		"username VARCHAR(120) UNIQUE NOT NULL, " +
 		"name VARCHAR(120), " +
 		"primary_group_name VARCHAR(120), " +
@@ -95,8 +94,8 @@ func InitializeMySQLDatabase() error {
 
 func ExportUsersMySQL(users []UserEntry) {
 	for _, user := range users {
-		_, err := mysqlDB.Exec("INSERT INTO users (user_id, creation_time, username, name, primary_group_name) VALUES (?, ?, ?, ?, ?)",
-			user.user_id, user.creation_time, user.username, user.name, user.primary_group_name)
+		_, err := mysqlDB.Exec("INSERT INTO users (user_id, username, name, primary_group_name) VALUES (?, ?, ?, ?)",
+			user.user_id, user.username, user.name, user.primary_group_name)
 		if err != nil {
 			log.Printf("ExportUsersMySQL error: %v", err)
 		}
