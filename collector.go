@@ -17,6 +17,7 @@ type DiscourseCache struct {
 var (
 	cache = DiscourseCache{
 		Topics: make(map[string]map[int]*discourse.TopicData),
+		Users:  make(map[int]*discourse.TopicParticipant),
 	}
 	cacheWriteMutex sync.Mutex
 )
