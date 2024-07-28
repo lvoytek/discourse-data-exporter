@@ -10,6 +10,7 @@ import (
 type DiscourseCache struct {
 	// Topics mapped by category slug and topic ID
 	Topics map[string]map[int]*discourse.TopicData
+	Users  map[int]*discourse.TopicParticipant
 }
 
 // Cache data used to avoid unnecessary Discourse API calls
@@ -81,6 +82,9 @@ func collectTopicsAndUsersFromCategory(wg *sync.WaitGroup, discourseClient *disc
 
 		if err == nil {
 			topics[topicOverview.ID] = updatedTopic
+			for _, participant := range updatedTopic.Details.Participants {
+				cache.Users[participant.ID] = &participant
+			}
 		} else {
 			log.Println("Download topic error:", err)
 		}

@@ -21,12 +21,12 @@ func InitExporter(exportType string, mysqlServerURL string, mysqlUsername string
 }
 
 func ExportAll(cache DiscourseCache, exportType string) {
-	ExportUsers(cache.Topics, exportType)
+	ExportUsers(cache.Users, exportType)
 	ExportTopicComments(cache.Topics, exportType)
 }
 
-func ExportUsers(topics map[string]map[int]*discourse.TopicData, exportType string) {
-	userEntries := userMapToUserEntry(topics)
+func ExportUsers(users map[int]*discourse.TopicParticipant, exportType string) {
+	userEntries := userMapToUserEntry(users)
 
 	if exportType == "mysql" {
 		ExportUsersMySQL(userEntries)
@@ -41,18 +41,14 @@ func ExportTopicComments(topics map[string]map[int]*discourse.TopicData, exportT
 	}
 }
 
-func userMapToUserEntry(topics map[string]map[int]*discourse.TopicData) (userEntries []UserEntry) {
-	for _, topic_list := range topics {
-		for _, topic := range topic_list {
-			for _, participant := range topic.Details.Participants {
-				userEntries = append(userEntries, UserEntry{
-					user_id:            participant.ID,
-					username:           participant.Username,
-					name:               participant.Name,
-					primary_group_name: participant.PrimaryGroupName,
-				})
-			}
-		}
+func userMapToUserEntry(users map[int]*discourse.TopicParticipant) (userEntries []UserEntry) {
+	for _, participant := range users {
+		userEntries = append(userEntries, UserEntry{
+			user_id:            participant.ID,
+			username:           participant.Username,
+			name:               participant.Name,
+			primary_group_name: participant.PrimaryGroupName,
+		})
 	}
 
 	return userEntries
