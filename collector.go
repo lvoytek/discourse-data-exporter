@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"sync"
+	"time"
 
 	"github.com/lvoytek/discourse_client_go/pkg/discourse"
 )
@@ -24,19 +25,19 @@ var (
 	cacheWriteMutex sync.Mutex
 )
 
-func Collect(discourseClient *discourse.Client, categoryList []string) DiscourseCache {
+func Collect(discourseClient *discourse.Client, categoryList []string, rateLimit time.Duration) DiscourseCache {
 	var collectorWg sync.WaitGroup
 
 	for _, categorySlug := range categoryList {
 		collectorWg.Add(1)
-		go collectTopicsAndUsersFromCategory(&collectorWg, discourseClient, categorySlug)
+		go collectTopicsAndUsersFromCategory(&collectorWg, discourseClient, categorySlug, rateLimit)
 	}
 
 	collectorWg.Wait()
 
 	for _, categorySlug := range categoryList {
 		collectorWg.Add(1)
-		go collectTopicEditsFromCacheTopicList(&collectorWg, discourseClient, categorySlug)
+		go collectTopicEditsFromCacheTopicList(&collectorWg, discourseClient, categorySlug, rateLimit)
 	}
 
 	collectorWg.Wait()
@@ -44,7 +45,7 @@ func Collect(discourseClient *discourse.Client, categoryList []string) Discourse
 	return cache
 }
 
-func collectTopicsAndUsersFromCategory(wg *sync.WaitGroup, discourseClient *discourse.Client, categorySlug string) {
+func collectTopicsAndUsersFromCategory(wg *sync.WaitGroup, discourseClient *discourse.Client, categorySlug string, rateLimit time.Duration) {
 	defer wg.Done()
 	topics, ok := cache.Topics[categorySlug]
 
@@ -77,6 +78,8 @@ func collectTopicsAndUsersFromCategory(wg *sync.WaitGroup, discourseClient *disc
 		}
 
 		page++
+
+		time.Sleep(rateLimit)
 	}
 
 	for _, topicOverview := range newTopics {
@@ -107,7 +110,7 @@ func collectTopicsAndUsersFromCategory(wg *sync.WaitGroup, discourseClient *disc
 	}
 }
 
-func collectTopicEditsFromCacheTopicList(wg *sync.WaitGroup, discourseClient *discourse.Client, categorySlug string) {
+func collectTopicEditsFromCacheTopicList(wg *sync.WaitGroup, discourseClient *discourse.Client, categorySlug string, rateLimit time.Duration) {
 	defer wg.Done()
 	topics, ok := cache.Topics[categorySlug]
 
@@ -120,13 +123,13 @@ func collectTopicEditsFromCacheTopicList(wg *sync.WaitGroup, discourseClient *di
 	// Get all new edit pages for each topic
 	for topicID, topic := range topics {
 		topicEditWg.Add(1)
-		go collectTopicEditsFromTopic(&topicEditWg, discourseClient, topicID, topic)
+		go collectTopicEditsFromTopic(&topicEditWg, discourseClient, topicID, topic, rateLimit)
 	}
 
 	topicEditWg.Wait()
 }
 
-func collectTopicEditsFromTopic(wg *sync.WaitGroup, discourseClient *discourse.Client, topicID int, topic *discourse.TopicData) {
+func collectTopicEditsFromTopic(wg *sync.WaitGroup, discourseClient *discourse.Client, topicID int, topic *discourse.TopicData, rateLimit time.Duration) {
 	defer wg.Done()
 	revisions, ok := cache.TopicEdits[topicID]
 
@@ -151,6 +154,8 @@ func collectTopicEditsFromTopic(wg *sync.WaitGroup, discourseClient *discourse.C
 		} else {
 			revisions = append(revisions, nextRevision)
 		}
+
+		time.Sleep(rateLimit)
 	}
 
 	if len(revisions) > 0 {
