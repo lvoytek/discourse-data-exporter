@@ -124,6 +124,7 @@ func collectTopicEditsFromCacheTopicList(wg *sync.WaitGroup, discourseClient *di
 	for topicID, topic := range topics {
 		topicEditWg.Add(1)
 		go collectTopicEditsFromTopic(&topicEditWg, discourseClient, topicID, topic, rateLimit)
+		time.Sleep(rateLimit * 5)
 	}
 
 	topicEditWg.Wait()
