@@ -66,6 +66,7 @@ func InitializeMySQLDatabase() error {
 		"creation_time DATETIME NOT NULL, " +
 		"update_time DATETIME NOT NULL, " +
 		"username VARCHAR(120) NOT NULL, " +
+		"is_initial_post BOOL NOT NULL, " +
 		"CONSTRAINT fk_username_comments FOREIGN KEY (username) REFERENCES users(username)" +
 		")")
 
@@ -111,11 +112,11 @@ func ExportUsersMySQL(users []UserEntry) {
 func ExportTopicCommentsMySQL(topicComments []TopicCommentsEntry) {
 	for _, topicComment := range topicComments {
 		_, err := mysqlDB.Exec("INSERT INTO comments "+
-			"(category_slug, topic_id, post_id, creation_time, update_time, username) "+
-			"VALUES (?, ?, ?, ?, ?, ?) "+
+			"(category_slug, topic_id, post_id, creation_time, update_time, username, is_initial_post) "+
+			"VALUES (?, ?, ?, ?, ?, ?, ?) "+
 			"ON DUPLICATE KEY UPDATE "+
 			"update_time = VALUES(update_time)",
-			topicComment.category_slug, topicComment.topic_id, topicComment.post_id, topicComment.creation_time, topicComment.update_time, topicComment.username)
+			topicComment.category_slug, topicComment.topic_id, topicComment.post_id, topicComment.creation_time, topicComment.update_time, topicComment.username, topicComment.is_initial_post)
 		if err != nil {
 			log.Printf("ExportTopicCommentsMySQL error: %v", err)
 		}

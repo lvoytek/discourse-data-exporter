@@ -57,14 +57,15 @@ func userMapToUserEntry(users map[int]*discourse.TopicParticipant) (userEntries 
 func topicMapToTopicComments(topics map[string]map[int]*discourse.TopicData) (topicComments []TopicCommentsEntry) {
 	for category_slug, topic_list := range topics {
 		for topic_id, topic := range topic_list {
-			for _, post := range topic.PostStream.Posts {
+			for postNum, post := range topic.PostStream.Posts {
 				topicComments = append(topicComments, TopicCommentsEntry{
-					category_slug: category_slug,
-					topic_id:      topic_id,
-					post_id:       post.ID,
-					creation_time: post.CreatedAt,
-					update_time:   post.UpdatedAt,
-					username:      post.Username,
+					category_slug:   category_slug,
+					topic_id:        topic_id,
+					post_id:         post.ID,
+					creation_time:   post.CreatedAt,
+					update_time:     post.UpdatedAt,
+					username:        post.Username,
+					is_initial_post: postNum == 0,
 				})
 			}
 		}
