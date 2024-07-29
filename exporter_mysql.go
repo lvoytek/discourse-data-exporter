@@ -79,7 +79,6 @@ func InitializeMySQLDatabase() error {
 		"(" +
 		"topic_id INT, " +
 		"edit_number INT, " +
-		"category_slug TEXT NOT NULL, " +
 		"creation_time DATETIME NOT NULL, " +
 		"username VARCHAR(120) NOT NULL, " +
 		"primary key (topic_id, edit_number), " +
@@ -125,8 +124,8 @@ func ExportTopicCommentsMySQL(topicComments []TopicCommentsEntry) {
 
 func ExportTopicEditsMySQL(topicEdits []TopicEditsEntry) {
 	for _, topicEdit := range topicEdits {
-		_, err := mysqlDB.Exec("INSERT IGNORE INTO edits (topic_id, edit_number, category_slug, creation_time, username) VALUES (?, ?, ?, ?, ?)",
-			topicEdit.topic_id, topicEdit.edit_number, topicEdit.category_slug, topicEdit.creation_time, topicEdit.username)
+		_, err := mysqlDB.Exec("INSERT IGNORE INTO edits (topic_id, edit_number, creation_time, username) VALUES (?, ?, ?, ?)",
+			topicEdit.topic_id, topicEdit.edit_number, topicEdit.creation_time, topicEdit.username)
 		if err != nil {
 			log.Printf("ExportTopicEditsMySQL error: %v", err)
 		}

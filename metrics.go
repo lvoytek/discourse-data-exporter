@@ -16,7 +16,6 @@ type TopicCommentsEntry struct {
 type TopicEditsEntry struct {
 	topic_id      int
 	edit_number   int
-	category_slug string
 	creation_time time.Time
 	username      string
 }
