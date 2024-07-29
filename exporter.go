@@ -23,6 +23,7 @@ func InitExporter(exportType string, mysqlServerURL string, mysqlUsername string
 func ExportAll(cache DiscourseCache, exportType string) {
 	ExportUsers(cache.Users, exportType)
 	ExportTopicComments(cache.Topics, exportType)
+	ExportTopicEdits(cache.TopicEdits, exportType)
 }
 
 func ExportUsers(users map[int]*discourse.TopicParticipant, exportType string) {
@@ -38,6 +39,14 @@ func ExportTopicComments(topics map[string]map[int]*discourse.TopicData, exportT
 
 	if exportType == "mysql" {
 		ExportTopicCommentsMySQL(topicComments)
+	}
+}
+
+func ExportTopicEdits(revisions map[int][]*discourse.PostRevision, exportType string) {
+	topicEdits := topicRevisionMapToTopicEdits(revisions)
+
+	if exportType == "mysql" {
+		ExportTopicEditsMySQL(topicEdits)
 	}
 }
 
@@ -72,4 +81,19 @@ func topicMapToTopicComments(topics map[string]map[int]*discourse.TopicData) (to
 	}
 
 	return topicComments
+}
+
+func topicRevisionMapToTopicEdits(revisions map[int][]*discourse.PostRevision) (topicEdits []TopicEditsEntry) {
+	for topic_id, topicRevisions := range revisions {
+		for revision_index, topicRevision := range topicRevisions {
+			topicEdits = append(topicEdits, TopicEditsEntry{
+				topic_id:      topic_id,
+				edit_number:   revision_index + 2,
+				creation_time: topicRevision.CreatedAt,
+				username:      topicRevision.Username,
+			})
+		}
+	}
+
+	return topicEdits
 }
