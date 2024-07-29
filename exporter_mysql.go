@@ -94,7 +94,13 @@ func InitializeMySQLDatabase() error {
 
 func ExportUsersMySQL(users []UserEntry) {
 	for _, user := range users {
-		_, err := mysqlDB.Exec("INSERT INTO users (user_id, username, name, primary_group_name) VALUES (?, ?, ?, ?)",
+		_, err := mysqlDB.Exec("INSERT INTO users "+
+			"(user_id, username, name, primary_group_name) "+
+			"VALUES (?, ?, ?, ?) "+
+			"ON DUPLICATE KEY UPDATE "+
+			"username = VALUES(username), "+
+			"name = VALUES(name), "+
+			"primary_group_name = VALUES(primary_group_name)",
 			user.user_id, user.username, user.name, user.primary_group_name)
 		if err != nil {
 			log.Printf("ExportUsersMySQL error: %v", err)
@@ -104,7 +110,11 @@ func ExportUsersMySQL(users []UserEntry) {
 
 func ExportTopicCommentsMySQL(topicComments []TopicCommentsEntry) {
 	for _, topicComment := range topicComments {
-		_, err := mysqlDB.Exec("INSERT INTO comments (category_slug, topic_id, post_id, creation_time, update_time, username) VALUES (?, ?, ?, ?, ?, ?)",
+		_, err := mysqlDB.Exec("INSERT INTO comments "+
+			"(category_slug, topic_id, post_id, creation_time, update_time, username) "+
+			"VALUES (?, ?, ?, ?, ?, ?) "+
+			"ON DUPLICATE KEY UPDATE "+
+			"update_time = VALUES(update_time)",
 			topicComment.category_slug, topicComment.topic_id, topicComment.post_id, topicComment.creation_time, topicComment.update_time, topicComment.username)
 		if err != nil {
 			log.Printf("ExportTopicCommentsMySQL error: %v", err)
@@ -114,7 +124,7 @@ func ExportTopicCommentsMySQL(topicComments []TopicCommentsEntry) {
 
 func ExportTopicEditsMySQL(topicEdits []TopicEditsEntry) {
 	for _, topicEdit := range topicEdits {
-		_, err := mysqlDB.Exec("INSERT INTO edits (topic_id, edit_number, category_slug, creation_time, username) VALUES (?, ?, ?, ?, ?)",
+		_, err := mysqlDB.Exec("INSERT IGNORE INTO edits (topic_id, edit_number, category_slug, creation_time, username) VALUES (?, ?, ?, ?, ?)",
 			topicEdit.topic_id, topicEdit.edit_number, topicEdit.category_slug, topicEdit.creation_time, topicEdit.username)
 		if err != nil {
 			log.Printf("ExportTopicEditsMySQL error: %v", err)
