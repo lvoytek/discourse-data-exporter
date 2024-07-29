@@ -9,15 +9,17 @@ import (
 
 type DiscourseCache struct {
 	// Topics mapped by category slug and topic ID
-	Topics map[string]map[int]*discourse.TopicData
-	Users  map[int]*discourse.TopicParticipant
+	Topics     map[string]map[int]*discourse.TopicData
+	Users      map[int]*discourse.TopicParticipant
+	TopicEdits map[int][]*discourse.PostRevision
 }
 
 // Cache data used to avoid unnecessary Discourse API calls
 var (
 	cache = DiscourseCache{
-		Topics: make(map[string]map[int]*discourse.TopicData),
-		Users:  make(map[int]*discourse.TopicParticipant),
+		Topics:     make(map[string]map[int]*discourse.TopicData),
+		Users:      make(map[int]*discourse.TopicParticipant),
+		TopicEdits: make(map[int][]*discourse.PostRevision),
 	}
 	cacheWriteMutex sync.Mutex
 )
@@ -28,6 +30,13 @@ func Collect(discourseClient *discourse.Client, categoryList []string) Discourse
 	for _, categorySlug := range categoryList {
 		collectorWg.Add(1)
 		go collectTopicsAndUsersFromCategory(&collectorWg, discourseClient, categorySlug)
+	}
+
+	collectorWg.Wait()
+
+	for _, categorySlug := range categoryList {
+		collectorWg.Add(1)
+		go collectTopicEditsFromCacheTopicList(&collectorWg, discourseClient, categorySlug)
 	}
 
 	collectorWg.Wait()
@@ -95,5 +104,58 @@ func collectTopicsAndUsersFromCategory(wg *sync.WaitGroup, discourseClient *disc
 		cacheWriteMutex.Lock()
 		defer cacheWriteMutex.Unlock()
 		cache.Topics[categorySlug] = topics
+	}
+}
+
+func collectTopicEditsFromCacheTopicList(wg *sync.WaitGroup, discourseClient *discourse.Client, categorySlug string) {
+	defer wg.Done()
+	topics, ok := cache.Topics[categorySlug]
+
+	if !ok {
+		return
+	}
+
+	var topicEditWg sync.WaitGroup
+
+	// Get all new edit pages for each topic
+	for topicID, topic := range topics {
+		topicEditWg.Add(1)
+		go collectTopicEditsFromTopic(&topicEditWg, discourseClient, topicID, topic)
+	}
+
+	topicEditWg.Wait()
+}
+
+func collectTopicEditsFromTopic(wg *sync.WaitGroup, discourseClient *discourse.Client, topicID int, topic *discourse.TopicData) {
+	defer wg.Done()
+	revisions, ok := cache.TopicEdits[topicID]
+
+	if !ok {
+		revisions = []*discourse.PostRevision{}
+	}
+
+	topicPostID := topic.PostStream.Posts[0].ID
+
+	numRevisions, err := discourse.GetNumPostRevisionsByID(discourseClient, topicPostID)
+
+	if err != nil {
+		log.Println("Number of topic edits data collection error for", topicID, err)
+	}
+
+	// Ignore existing revisions - index of revision in array is revision # - 2 since 2 is always the first revision
+	for revisionNum := len(revisions) + 2; revisionNum <= numRevisions; revisionNum++ {
+		nextRevision, err := discourse.GetPostRevisionByID(discourseClient, topicPostID, revisionNum)
+
+		if err != nil {
+			log.Println("Topic edits data collection error for", topicID, "revision", revisionNum, err)
+		} else {
+			revisions = append(revisions, nextRevision)
+		}
+	}
+
+	if len(revisions) > 0 {
+		cacheWriteMutex.Lock()
+		defer cacheWriteMutex.Unlock()
+		cache.TopicEdits[topicID] = revisions
 	}
 }
