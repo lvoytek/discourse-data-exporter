@@ -54,7 +54,7 @@ func collectTopicsAndUsersFromCategory(wg *sync.WaitGroup, discourseClient *disc
 	}
 
 	// Check each page of topics for category until there are no new topic bumps
-	page := 1
+	page := 0
 	newTopics := []discourse.SuggestedTopic{}
 	for {
 		categoryData, err := discourse.GetCategoryContentsBySlug(discourseClient, categorySlug, page)
