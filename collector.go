@@ -98,6 +98,28 @@ func collectTopicsAndUsersFromCategory(wg *sync.WaitGroup, discourseClient *disc
 			for _, participant := range updatedTopic.Details.Participants {
 				cache.Users[participant.Username] = &participant
 			}
+
+			// Fail safe if post creators are not in participant list
+			for _, post := range updatedTopic.PostStream.Posts {
+				_, userExists := cache.Users[post.Username]
+
+				if !userExists {
+					newUser, err := discourse.GetUserByUsername(discourseClient, post.Username)
+
+					if err != nil {
+						log.Println("Could not find post creator by username ", post.Username)
+						continue
+					}
+
+					cache.Users[newUser.User.Username] = &discourse.TopicParticipant{
+						ID:               newUser.User.ID,
+						Username:         newUser.User.Username,
+						Name:             newUser.User.Name,
+						PrimaryGroupName: newUser.User.PrimaryGroupName,
+					}
+				}
+			}
+
 		} else {
 			log.Println("Download topic error:", err)
 		}
