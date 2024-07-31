@@ -5,7 +5,7 @@ go 1.22.2
 require (
 	github.com/alecthomas/kingpin/v2 v2.4.0
 	github.com/go-sql-driver/mysql v1.8.1
-	github.com/lvoytek/discourse_client_go v0.2.1
+	github.com/lvoytek/discourse_client_go v0.2.2
 )
 
 require (
