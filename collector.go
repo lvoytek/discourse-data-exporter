@@ -118,20 +118,13 @@ func collectTopicEditsFromCacheTopicList(wg *sync.WaitGroup, discourseClient *di
 		return
 	}
 
-	var topicEditWg sync.WaitGroup
-
 	// Get all new edit pages for each topic
 	for topicID, topic := range topics {
-		topicEditWg.Add(1)
-		go collectTopicEditsFromTopic(&topicEditWg, discourseClient, topicID, topic, rateLimit)
-		time.Sleep(rateLimit * 5)
+		collectTopicEditsFromTopic(discourseClient, topicID, topic, rateLimit)
 	}
-
-	topicEditWg.Wait()
 }
 
-func collectTopicEditsFromTopic(wg *sync.WaitGroup, discourseClient *discourse.Client, topicID int, topic *discourse.TopicData, rateLimit time.Duration) {
-	defer wg.Done()
+func collectTopicEditsFromTopic(discourseClient *discourse.Client, topicID int, topic *discourse.TopicData, rateLimit time.Duration) {
 	revisions, ok := cache.TopicEdits[topicID]
 
 	if !ok {
