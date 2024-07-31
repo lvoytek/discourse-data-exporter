@@ -107,7 +107,7 @@ func collectTopicsAndUsersFromCategory(wg *sync.WaitGroup, discourseClient *disc
 					newUser, err := discourse.GetUserByUsername(discourseClient, post.Username)
 
 					if err != nil {
-						log.Println("Could not find post creator by username ", post.Username)
+						log.Println("Could not find post creator by username ", post.Username, "-", err)
 						continue
 					}
 
