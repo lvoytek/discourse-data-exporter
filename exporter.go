@@ -42,7 +42,7 @@ func ExportTopicComments(topics map[string]map[int]*discourse.TopicData, exportT
 	}
 }
 
-func ExportTopicEdits(revisions map[int][]*discourse.PostRevision, exportType string) {
+func ExportTopicEdits(revisions map[int]map[int]*discourse.PostRevision, exportType string) {
 	topicEdits := topicRevisionMapToTopicEdits(revisions)
 
 	if exportType == "mysql" {
@@ -83,12 +83,12 @@ func topicMapToTopicComments(topics map[string]map[int]*discourse.TopicData) (to
 	return topicComments
 }
 
-func topicRevisionMapToTopicEdits(revisions map[int][]*discourse.PostRevision) (topicEdits []TopicEditsEntry) {
+func topicRevisionMapToTopicEdits(revisions map[int]map[int]*discourse.PostRevision) (topicEdits []TopicEditsEntry) {
 	for topic_id, topicRevisions := range revisions {
 		for revision_index, topicRevision := range topicRevisions {
 			topicEdits = append(topicEdits, TopicEditsEntry{
 				topic_id:      topic_id,
-				edit_number:   revision_index + 2,
+				edit_number:   revision_index,
 				creation_time: topicRevision.CreatedAt,
 				username:      topicRevision.Username,
 			})

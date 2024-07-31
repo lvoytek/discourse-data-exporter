@@ -12,7 +12,7 @@ type DiscourseCache struct {
 	// Topics mapped by category slug and topic ID
 	Topics     map[string]map[int]*discourse.TopicData
 	Users      map[int]*discourse.TopicParticipant
-	TopicEdits map[int][]*discourse.PostRevision
+	TopicEdits map[int]map[int]*discourse.PostRevision
 }
 
 // Cache data used to avoid unnecessary Discourse API calls
@@ -20,7 +20,7 @@ var (
 	cache = DiscourseCache{
 		Topics:     make(map[string]map[int]*discourse.TopicData),
 		Users:      make(map[int]*discourse.TopicParticipant),
-		TopicEdits: make(map[int][]*discourse.PostRevision),
+		TopicEdits: make(map[int]map[int]*discourse.PostRevision),
 	}
 	cacheWriteMutex sync.Mutex
 )
@@ -128,7 +128,7 @@ func collectTopicEditsFromTopic(discourseClient *discourse.Client, topicID int, 
 	revisions, ok := cache.TopicEdits[topicID]
 
 	if !ok {
-		revisions = []*discourse.PostRevision{}
+		revisions = map[int]*discourse.PostRevision{}
 	}
 
 	topicPostID := topic.PostStream.Posts[0].ID
@@ -139,15 +139,18 @@ func collectTopicEditsFromTopic(discourseClient *discourse.Client, topicID int, 
 		log.Println("Number of topic edits data collection error for", topicID, err)
 	}
 
-	// Ignore existing revisions - index of revision in array is revision # - 2 since 2 is always the first revision
-	for revisionNum := len(revisions) + 2; revisionNum <= numRevisions; revisionNum++ {
-		nextRevision, err := discourse.GetPostRevisionByID(discourseClient, topicPostID, revisionNum)
+	// Update revisions by traversing through NextRevision linked list
+	currentRevisionNum := 2
+	for revisionCount := 0; revisionCount < numRevisions; revisionCount++ {
+		nextRevision, err := discourse.GetPostRevisionByID(discourseClient, topicPostID, currentRevisionNum)
 
 		if err != nil {
-			log.Println("Topic edits data collection error for", topicID, "revision", revisionNum, err)
-		} else {
-			revisions = append(revisions, nextRevision)
+			log.Println("Topic edits data collection error for", topicID, "revision", currentRevisionNum, err)
+			break
 		}
+
+		revisions[currentRevisionNum] = nextRevision
+		currentRevisionNum = nextRevision.NextRevision
 
 		time.Sleep(rateLimit)
 	}
