@@ -11,7 +11,7 @@ import (
 type DiscourseCache struct {
 	// Topics mapped by category slug and topic ID
 	Topics     map[string]map[int]*discourse.TopicData
-	Users      map[int]*discourse.TopicParticipant
+	Users      map[string]*discourse.TopicParticipant
 	TopicEdits map[int]map[int]*discourse.PostRevision
 }
 
@@ -19,7 +19,7 @@ type DiscourseCache struct {
 var (
 	cache = DiscourseCache{
 		Topics:     make(map[string]map[int]*discourse.TopicData),
-		Users:      make(map[int]*discourse.TopicParticipant),
+		Users:      make(map[string]*discourse.TopicParticipant),
 		TopicEdits: make(map[int]map[int]*discourse.PostRevision),
 	}
 	cacheWriteMutex sync.Mutex
@@ -96,7 +96,7 @@ func collectTopicsAndUsersFromCategory(wg *sync.WaitGroup, discourseClient *disc
 		if err == nil {
 			topics[topicOverview.ID] = updatedTopic
 			for _, participant := range updatedTopic.Details.Participants {
-				cache.Users[participant.ID] = &participant
+				cache.Users[participant.Username] = &participant
 			}
 		} else {
 			log.Println("Download topic error:", err)

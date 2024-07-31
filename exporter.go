@@ -26,7 +26,7 @@ func ExportAll(cache DiscourseCache, exportType string) {
 	ExportTopicEdits(cache.TopicEdits, exportType)
 }
 
-func ExportUsers(users map[int]*discourse.TopicParticipant, exportType string) {
+func ExportUsers(users map[string]*discourse.TopicParticipant, exportType string) {
 	userEntries := userMapToUserEntry(users)
 
 	if exportType == "mysql" {
@@ -50,7 +50,7 @@ func ExportTopicEdits(revisions map[int]map[int]*discourse.PostRevision, exportT
 	}
 }
 
-func userMapToUserEntry(users map[int]*discourse.TopicParticipant) (userEntries []UserEntry) {
+func userMapToUserEntry(users map[string]*discourse.TopicParticipant) (userEntries []UserEntry) {
 	for _, participant := range users {
 		userEntries = append(userEntries, UserEntry{
 			user_id:            participant.ID,
