@@ -163,7 +163,7 @@ func collectTopicEditsFromTopic(discourseClient *discourse.Client, topicID int, 
 
 	// Update revisions by traversing through NextRevision linked list
 	currentRevisionNum := 2
-	for revisionCount := 0; revisionCount < numRevisions; revisionCount++ {
+	for revisionCount := 1; revisionCount < numRevisions; revisionCount++ {
 		nextRevision, err := discourse.GetPostRevisionByID(discourseClient, topicPostID, currentRevisionNum)
 
 		if err != nil {
