@@ -82,6 +82,8 @@ func collectTopicsAndUsersFromCategory(wg *sync.WaitGroup, discourseClient *disc
 		time.Sleep(rateLimit)
 	}
 
+	additionalUsers := map[string]*discourse.TopicParticipant{}
+
 	for _, topicOverview := range newTopics {
 		cachedTopic, topicExists := topics[topicOverview.ID]
 
@@ -96,14 +98,16 @@ func collectTopicsAndUsersFromCategory(wg *sync.WaitGroup, discourseClient *disc
 		if err == nil {
 			topics[topicOverview.ID] = updatedTopic
 			for _, participant := range updatedTopic.Details.Participants {
-				cache.Users[participant.Username] = &participant
+				additionalUsers[participant.Username] = &participant
 			}
 
 			// Fail safe if post creators are not in participant list
 			for _, post := range updatedTopic.PostStream.Posts {
-				_, userExists := cache.Users[post.Username]
+				_, userExistsInCache := cache.Users[post.Username]
+				_, userExistsInAdditional := additionalUsers[post.Username]
 
-				if !userExists {
+				if !userExistsInCache && !userExistsInAdditional {
+
 					newUser, err := discourse.GetUserByUsername(discourseClient, post.Username)
 
 					if err != nil {
@@ -111,7 +115,7 @@ func collectTopicsAndUsersFromCategory(wg *sync.WaitGroup, discourseClient *disc
 						continue
 					}
 
-					cache.Users[newUser.User.Username] = &discourse.TopicParticipant{
+					additionalUsers[newUser.User.Username] = &discourse.TopicParticipant{
 						ID:               newUser.User.ID,
 						Username:         newUser.User.Username,
 						Name:             newUser.User.Name,
@@ -129,6 +133,16 @@ func collectTopicsAndUsersFromCategory(wg *sync.WaitGroup, discourseClient *disc
 		cacheWriteMutex.Lock()
 		defer cacheWriteMutex.Unlock()
 		cache.Topics[categorySlug] = topics
+
+		// Add newly found users
+		for username, additionalUser := range additionalUsers {
+			_, userExists := cache.Users[username]
+
+			if !userExists {
+				cache.Users[username] = additionalUser
+			}
+		}
+
 	}
 }
 
