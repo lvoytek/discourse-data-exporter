@@ -33,6 +33,8 @@ func ExportUsers(users map[string]*discourse.TopicParticipant, exportType string
 
 	if exportType == "mysql" {
 		ExportUsersMySQL(userEntries)
+	} else if exportType == "csv" {
+		ExportUsersCSV(userEntries)
 	}
 }
 
@@ -41,6 +43,8 @@ func ExportTopicComments(topics map[string]map[int]*discourse.TopicData, exportT
 
 	if exportType == "mysql" {
 		ExportTopicCommentsMySQL(topicComments)
+	} else if exportType == "csv" {
+		ExportTopicCommentsCSV(topicComments)
 	}
 }
 
@@ -49,6 +53,8 @@ func ExportTopicEdits(revisions map[int]map[int]*discourse.PostRevision, exportT
 
 	if exportType == "mysql" {
 		ExportTopicEditsMySQL(topicEdits)
+	} else if exportType == "csv" {
+		ExportTopicEditsCSV(topicEdits)
 	}
 }
 
