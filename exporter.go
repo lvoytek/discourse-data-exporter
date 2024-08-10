@@ -6,7 +6,7 @@ import (
 	"github.com/lvoytek/discourse_client_go/pkg/discourse"
 )
 
-func InitExporter(exportType string, mysqlServerURL string, mysqlUsername string, mysqlPassword string) error {
+func InitExporter(exportType string, mysqlServerURL string, mysqlUsername string, mysqlPassword string, csvFoldername string) error {
 	if exportType == "mysql" {
 		err := ConnectMySQL(mysqlServerURL, mysqlUsername, mysqlPassword)
 
@@ -15,6 +15,8 @@ func InitExporter(exportType string, mysqlServerURL string, mysqlUsername string
 		}
 
 		return InitializeMySQLDatabase()
+	} else if exportType == "csv" {
+		return SetCSVFolder(csvFoldername)
 	}
 
 	return fmt.Errorf("invalid exporter type: %s", exportType)

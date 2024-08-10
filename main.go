@@ -20,13 +20,14 @@ func main() {
 		mysqlServerURL         = kingpin.Flag("mysql.database-url", "The location of the database to export to in mysql mode.").Default("localhost").String()
 		mysqlUsername          = kingpin.Flag("mysql.username", "The MySQL user to use for inputting data in mysql mode.").String()
 		mysqlPassword          = kingpin.Flag("mysql.password", "The password for the MySQL user to use in mysql mode.").String()
+		csvFoldername          = kingpin.Flag("csv.foldername", "The name of the folder to send csv files to.").Default("out").String()
 	)
 
 	kingpin.Parse()
 
 	discourseClient := discourse.NewAnonymousClient(*discourseSiteURL)
 
-	exporterErr := InitExporter(*exportType, *mysqlServerURL, *mysqlUsername, *mysqlPassword)
+	exporterErr := InitExporter(*exportType, *mysqlServerURL, *mysqlUsername, *mysqlPassword, *csvFoldername)
 
 	if exporterErr != nil {
 		log.Fatal(exporterErr)
