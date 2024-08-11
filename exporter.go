@@ -61,10 +61,10 @@ func ExportTopicEdits(revisions map[int]map[int]*discourse.PostRevision, exportT
 func userMapToUserEntry(users map[string]*discourse.TopicParticipant) (userEntries []UserEntry) {
 	for _, participant := range users {
 		userEntries = append(userEntries, UserEntry{
-			user_id:            participant.ID,
-			username:           participant.Username,
-			name:               participant.Name,
-			primary_group_name: participant.PrimaryGroupName,
+			UserID:           participant.ID,
+			Username:         participant.Username,
+			Name:             participant.Name,
+			PrimaryGroupName: participant.PrimaryGroupName,
 		})
 	}
 
@@ -76,13 +76,13 @@ func topicMapToTopicComments(topics map[string]map[int]*discourse.TopicData) (to
 		for topic_id, topic := range topic_list {
 			for postNum, post := range topic.PostStream.Posts {
 				topicComments = append(topicComments, TopicCommentsEntry{
-					category_slug:   category_slug,
-					topic_id:        topic_id,
-					post_id:         post.ID,
-					creation_time:   post.CreatedAt,
-					update_time:     post.UpdatedAt,
-					username:        post.Username,
-					is_initial_post: postNum == 0,
+					CategorySlug:  category_slug,
+					TopicID:       topic_id,
+					PostID:        post.ID,
+					CreationTime:  post.CreatedAt,
+					UpdateTime:    post.UpdatedAt,
+					Username:      post.Username,
+					IsInitialPost: postNum == 0,
 				})
 			}
 		}
@@ -95,10 +95,10 @@ func topicRevisionMapToTopicEdits(revisions map[int]map[int]*discourse.PostRevis
 	for topic_id, topicRevisions := range revisions {
 		for revision_index, topicRevision := range topicRevisions {
 			topicEdits = append(topicEdits, TopicEditsEntry{
-				topic_id:      topic_id,
-				edit_number:   revision_index,
-				creation_time: topicRevision.CreatedAt,
-				username:      topicRevision.Username,
+				TopicID:      topic_id,
+				EditNumber:   revision_index,
+				CreationTime: topicRevision.CreatedAt,
+				Username:     topicRevision.Username,
 			})
 		}
 	}

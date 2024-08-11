@@ -101,7 +101,7 @@ func ExportUsersMySQL(users []UserEntry) {
 			"username = VALUES(username), "+
 			"name = VALUES(name), "+
 			"primary_group_name = VALUES(primary_group_name)",
-			user.user_id, user.username, user.name, user.primary_group_name)
+			user.UserID, user.Username, user.Name, user.PrimaryGroupName)
 		if err != nil {
 			log.Printf("ExportUsersMySQL error: %v", err)
 		}
@@ -115,7 +115,7 @@ func ExportTopicCommentsMySQL(topicComments []TopicCommentsEntry) {
 			"VALUES (?, ?, ?, ?, ?, ?, ?) "+
 			"ON DUPLICATE KEY UPDATE "+
 			"update_time = VALUES(update_time)",
-			topicComment.category_slug, topicComment.topic_id, topicComment.post_id, topicComment.creation_time, topicComment.update_time, topicComment.username, topicComment.is_initial_post)
+			topicComment.CategorySlug, topicComment.TopicID, topicComment.PostID, topicComment.CreationTime, topicComment.UpdateTime, topicComment.Username, topicComment.IsInitialPost)
 		if err != nil {
 			log.Printf("ExportTopicCommentsMySQL error: %v", err)
 		}
@@ -125,7 +125,7 @@ func ExportTopicCommentsMySQL(topicComments []TopicCommentsEntry) {
 func ExportTopicEditsMySQL(topicEdits []TopicEditsEntry) {
 	for _, topicEdit := range topicEdits {
 		_, err := mysqlDB.Exec("INSERT IGNORE INTO edits (topic_id, edit_number, creation_time, username) VALUES (?, ?, ?, ?)",
-			topicEdit.topic_id, topicEdit.edit_number, topicEdit.creation_time, topicEdit.username)
+			topicEdit.TopicID, topicEdit.EditNumber, topicEdit.CreationTime, topicEdit.Username)
 		if err != nil {
 			log.Printf("ExportTopicEditsMySQL error: %v", err)
 		}

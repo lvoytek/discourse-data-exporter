@@ -4,26 +4,26 @@ import "time"
 
 // Metric Data
 type TopicCommentsEntry struct {
-	category_slug   string    `csv:"Category Slug"`
-	topic_id        int       `csv:"Topic ID"`
-	post_id         int       `csv:"Post ID"`
-	creation_time   time.Time `csv:"Creation Time"`
-	update_time     time.Time `csv:"Last Update Time"`
-	username        string    `csv:"Creator Username"`
-	is_initial_post bool      `csv:"Is the topic's text"`
+	CategorySlug  string    `csv:"Category Slug" json:"category_slug"`
+	TopicID       int       `csv:"Topic ID" json:"topic_id"`
+	PostID        int       `csv:"Post ID" json:"post_id"`
+	CreationTime  time.Time `csv:"Creation Time" json:"creation_time"`
+	UpdateTime    time.Time `csv:"Last Update Time" json:"update_time,omitempty"`
+	Username      string    `csv:"Creator Username" json:"username"`
+	IsInitialPost bool      `csv:"Is the topic's text" json:"is_initial_post"`
 }
 
 type TopicEditsEntry struct {
-	topic_id      int       `csv:"Topic ID"`
-	edit_number   int       `csv:"Edit Number"`
-	creation_time time.Time `csv:"Creation Time"`
-	username      string    `csv:"Editor Username"`
+	TopicID      int       `csv:"Topic ID" json:"topic_id"`
+	EditNumber   int       `csv:"Edit Number" json:"edit_number"`
+	CreationTime time.Time `csv:"Creation Time" json:"creation_time"`
+	Username     string    `csv:"Editor Username" json:"username"`
 }
 
 // Context Data
 type UserEntry struct {
-	user_id            int    `csv:"User ID"`
-	username           string `csv:"Username"`
-	name               string `csv:"Name"`
-	primary_group_name string `csv:"Primary Group Name"`
+	UserID           int    `csv:"User ID" json:"user_id"`
+	Username         string `csv:"Username" json:"username"`
+	Name             string `csv:"Name" json:"name,omitempty"`
+	PrimaryGroupName string `csv:"Primary Group Name" json:"primary_group_name,omitempty"`
 }
