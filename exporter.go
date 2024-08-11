@@ -17,6 +17,8 @@ func InitExporter(exportType string, mysqlServerURL string, mysqlUsername string
 		return InitializeMySQLDatabase()
 	} else if exportType == "csv" {
 		return SetCSVFolder(csvFoldername)
+	} else if exportType == "json" {
+		return nil
 	}
 
 	return fmt.Errorf("invalid exporter type: %s", exportType)
@@ -35,6 +37,8 @@ func ExportUsers(users map[string]*discourse.TopicParticipant, exportType string
 		ExportUsersMySQL(userEntries)
 	} else if exportType == "csv" {
 		ExportUsersCSV(userEntries)
+	} else if exportType == "json" {
+		ExportUsersJSON(userEntries)
 	}
 }
 
@@ -45,6 +49,8 @@ func ExportTopicComments(topics map[string]map[int]*discourse.TopicData, exportT
 		ExportTopicCommentsMySQL(topicComments)
 	} else if exportType == "csv" {
 		ExportTopicCommentsCSV(topicComments)
+	} else if exportType == "json" {
+		ExportTopicCommentsJSON(topicComments)
 	}
 }
 
@@ -55,6 +61,8 @@ func ExportTopicEdits(revisions map[int]map[int]*discourse.PostRevision, exportT
 		ExportTopicEditsMySQL(topicEdits)
 	} else if exportType == "csv" {
 		ExportTopicEditsCSV(topicEdits)
+	} else if exportType == "json" {
+		ExportTopicEditsJSON(topicEdits)
 	}
 }
 
