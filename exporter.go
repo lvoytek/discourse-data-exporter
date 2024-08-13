@@ -24,10 +24,19 @@ func InitExporter(exportType string, mysqlServerURL string, mysqlUsername string
 	return fmt.Errorf("invalid exporter type: %s", exportType)
 }
 
-func ExportAll(cache DiscourseCache, exportType string) {
-	ExportUsers(cache.Users, exportType)
-	ExportTopicComments(cache.Topics, exportType)
-	ExportTopicEdits(cache.TopicEdits, exportType)
+func ExportAll(cache DiscourseCache, exportType string, itemsToExport ItemsToExport) {
+
+	if itemsToExport.TopicComments || itemsToExport.TopicEdits {
+		ExportUsers(cache.Users, exportType)
+	}
+
+	if itemsToExport.TopicComments {
+		ExportTopicComments(cache.Topics, exportType)
+	}
+
+	if itemsToExport.TopicEdits {
+		ExportTopicEdits(cache.TopicEdits, exportType)
+	}
 }
 
 func ExportUsers(users map[string]*discourse.TopicParticipant, exportType string) {

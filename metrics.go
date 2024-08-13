@@ -27,3 +27,9 @@ type UserEntry struct {
 	Name             string `csv:"Name" json:"name,omitempty"`
 	PrimaryGroupName string `csv:"Primary Group Name" json:"primary_group_name,omitempty"`
 }
+
+// Struct containing info on what types to export
+type ItemsToExport struct {
+	TopicComments bool
+	TopicEdits    bool
+}

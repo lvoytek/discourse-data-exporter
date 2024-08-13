@@ -21,6 +21,8 @@ func main() {
 		mysqlUsername          = kingpin.Flag("mysql.username", "The MySQL user to use for inputting data in mysql mode.").String()
 		mysqlPassword          = kingpin.Flag("mysql.password", "The password for the MySQL user to use in mysql mode.").String()
 		csvFoldername          = kingpin.Flag("csv.foldername", "The name of the folder to send csv files to.").Default("out").String()
+		exportTopicComments    = kingpin.Flag("export.topic-comments", "Export posts/comments for each topic.").Default("false").Bool()
+		exportTopicEdits       = kingpin.Flag("export.topic-edits", "Export edits to the main post for each topic.").Default("false").Bool()
 	)
 
 	kingpin.Parse()
@@ -33,18 +35,23 @@ func main() {
 		log.Fatal(exporterErr)
 	}
 
+	itemsToExport := ItemsToExport{
+		TopicComments: *exportTopicComments,
+		TopicEdits:    *exportTopicEdits,
+	}
+
 	if *dataCollectOnce {
-		discourseData := Collect(discourseClient, strings.Split(strings.TrimSpace(*discourseCategoryList), ","), time.Duration(*discourseRateLimit)*time.Second)
-		ExportAll(discourseData, *exportType)
+		discourseData := Collect(discourseClient, strings.Split(strings.TrimSpace(*discourseCategoryList), ","), itemsToExport, time.Duration(*discourseRateLimit)*time.Second)
+		ExportAll(discourseData, *exportType, itemsToExport)
 	} else {
-		go IntervalCollectAndExport(discourseClient, *exportType, strings.Split(strings.TrimSpace(*discourseCategoryList), ","), time.Duration(*dataCollectionInterval)*time.Second, time.Duration(*discourseRateLimit)*time.Second)
+		go IntervalCollectAndExport(discourseClient, *exportType, strings.Split(strings.TrimSpace(*discourseCategoryList), ","), itemsToExport, time.Duration(*dataCollectionInterval)*time.Second, time.Duration(*discourseRateLimit)*time.Second)
 	}
 }
 
-func IntervalCollectAndExport(discourseClient *discourse.Client, exportType string, categoryList []string, interval time.Duration, rateLimit time.Duration) {
+func IntervalCollectAndExport(discourseClient *discourse.Client, exportType string, categoryList []string, itemsToExport ItemsToExport, interval time.Duration, rateLimit time.Duration) {
 	for {
-		discourseData := Collect(discourseClient, categoryList, rateLimit)
-		ExportAll(discourseData, exportType)
+		discourseData := Collect(discourseClient, categoryList, itemsToExport, rateLimit)
+		ExportAll(discourseData, exportType, itemsToExport)
 		time.Sleep(interval)
 	}
 }
