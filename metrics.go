@@ -10,7 +10,7 @@ type TopicCommentsEntry struct {
 	CreationTime  time.Time `csv:"Creation Time" json:"creation_time"`
 	UpdateTime    time.Time `csv:"Last Update Time" json:"update_time,omitempty"`
 	Username      string    `csv:"Creator Username" json:"username"`
-	IsInitialPost bool      `csv:"Is the topic's text" json:"is_initial_post"`
+	IsInitialPost bool      `csv:"Is the topic's main post" json:"is_initial_post"`
 }
 
 type TopicEditsEntry struct {
