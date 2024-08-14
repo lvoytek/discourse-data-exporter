@@ -3,7 +3,7 @@ summary: Export metrics and data from a Discourse server
 description: |
   Download data from a Discourse server, then extract requested metrics to MySQL, CSV, or JSON.
 
-base: core22
+base: core24
 type: app
 version: git
 confinement: strict
@@ -11,7 +11,7 @@ grade: stable
 
 apps:
   dscexporter:
-    command: bin/dscexporter
+    command: dscexporter
     plugs:
       [network, network-bind]
 
@@ -19,5 +19,8 @@ parts:
   dscexporter:
     plugin: go
     build-snaps: [go/latest/stable]
-    source: https://github.com/lvoytek/discourse-data-exporter
+    source: .
     source-type: git
+    override-build: |
+      go build -o $SNAPCRAFT_PART_INSTALL/dscexporter *.go
+
