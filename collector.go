@@ -30,22 +30,48 @@ func Collect(discourseClient *discourse.Client, itemsToExport ItemsToExport, rat
 
 	categoryList := []string{itemsToExport.LimitToCategorySlug}
 
+	// Topic Comments and Topic Users
 	if itemsToExport.TopicComments || itemsToExport.TopicEdits {
-		for _, categorySlug := range categoryList {
-			collectorWg.Add(1)
-			go collectTopicsAndUsersFromCategory(&collectorWg, discourseClient, categorySlug, rateLimit)
-		}
+		if itemsToExport.LimitToTopicID > 0 {
+			collectTopicAndAssociatedUsers(discourseClient, itemsToExport.LimitToTopicID, rateLimit)
+		} else {
+			for _, categorySlug := range categoryList {
+				collectorWg.Add(1)
+				go collectTopicsAndUsersFromCategory(&collectorWg, discourseClient, categorySlug, rateLimit)
+			}
 
-		collectorWg.Wait()
+			collectorWg.Wait()
+		}
 	}
 
+	// Topic Edits
 	if itemsToExport.TopicEdits {
-		for _, categorySlug := range categoryList {
-			collectorWg.Add(1)
-			go collectTopicEditsFromCacheTopicList(&collectorWg, discourseClient, categorySlug, rateLimit)
-		}
+		if itemsToExport.LimitToTopicID > 0 {
+			// Find single topic to export in cache
+			var topicData *discourse.TopicData
+			var ok bool
 
-		collectorWg.Wait()
+			for _, topics := range cache.Topics {
+				topicData, ok = topics[itemsToExport.LimitToTopicID]
+
+				if ok {
+					break
+				}
+			}
+
+			if ok {
+				collectTopicEditsFromTopic(discourseClient, itemsToExport.LimitToTopicID, topicData, rateLimit)
+			} else {
+				log.Println("Unable to find topic", itemsToExport.LimitToTopicID, "in cache")
+			}
+		} else {
+			for _, categorySlug := range categoryList {
+				collectorWg.Add(1)
+				go collectTopicEditsFromCacheTopicList(&collectorWg, discourseClient, categorySlug, rateLimit)
+			}
+
+			collectorWg.Wait()
+		}
 	}
 
 	return cache
@@ -103,31 +129,11 @@ func collectTopicsAndUsersFromCategory(wg *sync.WaitGroup, discourseClient *disc
 
 		if err == nil {
 			topics[topicOverview.ID] = updatedTopic
-			for _, participant := range updatedTopic.Details.Participants {
-				additionalUsers[participant.Username] = &participant
-			}
 
-			// Fail safe if post creators are not in participant list
-			for _, post := range updatedTopic.PostStream.Posts {
-				_, userExistsInCache := cache.Users[post.Username]
-				_, userExistsInAdditional := additionalUsers[post.Username]
+			additionalTopicUsers := getUsersListedInTopic(discourseClient, updatedTopic, rateLimit)
 
-				if !userExistsInCache && !userExistsInAdditional {
-
-					newUser, err := discourse.GetUserByUsername(discourseClient, post.Username)
-
-					if err != nil {
-						log.Println("Could not find post creator by username ", post.Username, "-", err)
-						continue
-					}
-
-					additionalUsers[newUser.User.Username] = &discourse.TopicParticipant{
-						ID:               newUser.User.ID,
-						Username:         newUser.User.Username,
-						Name:             newUser.User.Name,
-						PrimaryGroupName: newUser.User.PrimaryGroupName,
-					}
-				}
+			for k, v := range additionalTopicUsers {
+				additionalUsers[k] = v
 			}
 
 		} else {
@@ -148,8 +154,74 @@ func collectTopicsAndUsersFromCategory(wg *sync.WaitGroup, discourseClient *disc
 				cache.Users[username] = additionalUser
 			}
 		}
-
 	}
+}
+
+func collectTopicAndAssociatedUsers(discourseClient *discourse.Client, topicID int, rateLimit time.Duration) {
+	updatedTopic, err := discourse.GetTopicByID(discourseClient, topicID)
+	time.Sleep(rateLimit)
+
+	if err == nil {
+		additionalUsers := getUsersListedInTopic(discourseClient, updatedTopic, rateLimit)
+
+		categoryData, err := discourse.ShowCategory(discourseClient, updatedTopic.CategoryID)
+		categoryName := ""
+
+		if err != nil {
+			log.Println("Could not find category for topic ", updatedTopic.Title, "-", err)
+		} else {
+			categoryName = categoryData.Category.Slug
+		}
+
+		cacheWriteMutex.Lock()
+		defer cacheWriteMutex.Unlock()
+		cache.Topics[categoryName] = map[int]*discourse.TopicData{topicID: updatedTopic}
+
+		// Add newly found users
+		for username, additionalUser := range additionalUsers {
+			_, userExists := cache.Users[username]
+
+			if !userExists {
+				cache.Users[username] = additionalUser
+			}
+		}
+	} else {
+		log.Println("Download topic error:", err)
+	}
+}
+
+func getUsersListedInTopic(discourseClient *discourse.Client, topicData *discourse.TopicData, rateLimit time.Duration) map[string]*discourse.TopicParticipant {
+	additionalUsers := map[string]*discourse.TopicParticipant{}
+
+	for _, participant := range topicData.Details.Participants {
+		additionalUsers[participant.Username] = &participant
+	}
+
+	// Fail safe if post creators are not in participant list
+	for _, post := range topicData.PostStream.Posts {
+		_, userExistsInCache := cache.Users[post.Username]
+		_, userExistsInAdditional := additionalUsers[post.Username]
+
+		if !userExistsInCache && !userExistsInAdditional {
+
+			newUser, err := discourse.GetUserByUsername(discourseClient, post.Username)
+			time.Sleep(rateLimit)
+
+			if err != nil {
+				log.Println("Could not find post creator by username ", post.Username, "-", err)
+				continue
+			}
+
+			additionalUsers[newUser.User.Username] = &discourse.TopicParticipant{
+				ID:               newUser.User.ID,
+				Username:         newUser.User.Username,
+				Name:             newUser.User.Name,
+				PrimaryGroupName: newUser.User.PrimaryGroupName,
+			}
+		}
+	}
+
+	return additionalUsers
 }
 
 func collectTopicEditsFromCacheTopicList(wg *sync.WaitGroup, discourseClient *discourse.Client, categorySlug string, rateLimit time.Duration) {
