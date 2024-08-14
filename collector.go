@@ -25,8 +25,10 @@ var (
 	cacheWriteMutex sync.Mutex
 )
 
-func Collect(discourseClient *discourse.Client, categoryList []string, itemsToExport ItemsToExport, rateLimit time.Duration) DiscourseCache {
+func Collect(discourseClient *discourse.Client, itemsToExport ItemsToExport, rateLimit time.Duration) DiscourseCache {
 	var collectorWg sync.WaitGroup
+
+	categoryList := []string{itemsToExport.LimitToCategorySlug}
 
 	if itemsToExport.TopicComments || itemsToExport.TopicEdits {
 		for _, categorySlug := range categoryList {
