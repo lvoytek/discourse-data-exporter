@@ -21,8 +21,9 @@ func main() {
 		mysqlUsername          = kingpin.Flag("mysql.username", "The MySQL user to use for inputting data in mysql mode.").String()
 		mysqlPassword          = kingpin.Flag("mysql.password", "The password for the MySQL user to use in mysql mode.").String()
 		csvFoldername          = kingpin.Flag("csv.foldername", "The name of the folder to send csv files to.").Default("out").String()
-		exportTopicComments    = kingpin.Flag("export.topic-comments", "Export posts/comments for each topic.").Default("false").Bool()
-		exportTopicEdits       = kingpin.Flag("export.topic-edits", "Export edits to the main post for each topic.").Default("false").Bool()
+		exportTopicComments    = kingpin.Flag("export.posts", "Export posts/comments for each topic.").Default("false").Bool()
+		exportTopicEdits       = kingpin.Flag("export.edits", "Export edits to the main post for each topic.").Default("false").Bool()
+		exportUsers            = kingpin.Flag("export.users", "Export user metadata").Default("false").Bool()
 	)
 
 	kingpin.Parse()
@@ -38,6 +39,7 @@ func main() {
 	itemsToExport := ItemsToExport{
 		TopicComments: *exportTopicComments,
 		TopicEdits:    *exportTopicEdits,
+		Users:         *exportUsers,
 
 		LimitToCategorySlug: *discourseCategory,
 		LimitToTopicID:      *discourseTopic,

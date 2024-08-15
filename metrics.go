@@ -32,6 +32,7 @@ type UserEntry struct {
 type ItemsToExport struct {
 	TopicComments bool
 	TopicEdits    bool
+	Users         bool
 
 	LimitToCategorySlug string
 	LimitToTopicID      int
