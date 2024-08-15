@@ -30,6 +30,25 @@ func Collect(discourseClient *discourse.Client, itemsToExport ItemsToExport, rat
 
 	categoryList := []string{itemsToExport.LimitToCategorySlug}
 
+	// Get all categories if no category or topic specified
+	if itemsToExport.LimitToCategorySlug == "" && itemsToExport.LimitToTopicID == 0 {
+		allCategories, err := discourse.ListCategories(discourseClient, true)
+
+		if err != nil {
+			log.Fatalln("Unable to list categories -", err)
+		}
+
+		categoryList = []string{}
+
+		for _, nextCategory := range allCategories.CategoryList.Categories {
+			categoryList = append(categoryList, nextCategory.Slug)
+
+			for _, nextSubcategory := range nextCategory.SubcategoryList {
+				categoryList = append(categoryList, nextCategory.Slug+"/"+nextSubcategory.Slug)
+			}
+		}
+	}
+
 	// Topic Comments and Topic Users
 	if itemsToExport.TopicComments || itemsToExport.TopicEdits {
 		if itemsToExport.LimitToTopicID > 0 {
