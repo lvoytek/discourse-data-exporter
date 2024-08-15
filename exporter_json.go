@@ -6,32 +6,24 @@ import (
 	"log"
 )
 
-func ExportUsersJSON(users []UserEntry) {
-	data, err := json.Marshal(users)
-
-	if err != nil {
-		log.Printf("ExportUsersJSON error: %v", err)
+func ExportJSON(data DataToExport, itemsToExport ItemsToExport) {
+	if !itemsToExport.Users {
+		data.Users = nil
 	}
 
-	fmt.Println(string(data))
-}
-
-func ExportTopicCommentsJSON(topicComments []TopicCommentsEntry) {
-	data, err := json.Marshal(topicComments)
-
-	if err != nil {
-		log.Printf("ExportUsersJSON error: %v", err)
+	if !itemsToExport.TopicComments {
+		data.Posts = nil
 	}
 
-	fmt.Println(string(data))
-}
-
-func ExportTopicEditsJSON(topicEdits []TopicEditsEntry) {
-	data, err := json.Marshal(topicEdits)
-
-	if err != nil {
-		log.Printf("ExportUsersJSON error: %v", err)
+	if !itemsToExport.TopicEdits {
+		data.Edits = nil
 	}
 
-	fmt.Println(string(data))
+	jsonData, err := json.Marshal(data)
+
+	if err != nil {
+		log.Printf("ExportJSON error: %v", err)
+	}
+
+	fmt.Println(string(jsonData))
 }

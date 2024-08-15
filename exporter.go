@@ -25,53 +25,40 @@ func InitExporter(exportType string, mysqlServerURL string, mysqlUsername string
 }
 
 func ExportAll(cache DiscourseCache, exportType string, itemsToExport ItemsToExport) {
-
-	if itemsToExport.TopicComments || itemsToExport.TopicEdits {
-		ExportUsers(cache.Users, exportType)
+	dataToExport := DataToExport{
+		Users: userMapToUserEntry(cache.Users),
+		Posts: topicMapToTopicComments(cache.Topics),
+		Edits: topicRevisionMapToTopicEdits(cache.TopicEdits),
 	}
-
-	if itemsToExport.TopicComments {
-		ExportTopicComments(cache.Topics, exportType)
-	}
-
-	if itemsToExport.TopicEdits {
-		ExportTopicEdits(cache.TopicEdits, exportType)
-	}
-}
-
-func ExportUsers(users map[string]*discourse.TopicParticipant, exportType string) {
-	userEntries := userMapToUserEntry(users)
 
 	if exportType == "mysql" {
-		ExportUsersMySQL(userEntries)
+		if itemsToExport.TopicComments || itemsToExport.TopicEdits || itemsToExport.Users {
+			ExportUsersMySQL(dataToExport.Users)
+		}
+
+		if itemsToExport.TopicComments {
+			ExportTopicCommentsMySQL(dataToExport.Posts)
+		}
+
+		if itemsToExport.TopicEdits {
+			ExportTopicEditsMySQL(dataToExport.Edits)
+		}
+
 	} else if exportType == "csv" {
-		ExportUsersCSV(userEntries)
+		if itemsToExport.Users {
+			ExportUsersCSV(dataToExport.Users)
+		}
+
+		if itemsToExport.TopicComments {
+			ExportTopicCommentsCSV(dataToExport.Posts)
+		}
+
+		if itemsToExport.TopicEdits {
+			ExportTopicEditsCSV(dataToExport.Edits)
+		}
+
 	} else if exportType == "json" {
-		ExportUsersJSON(userEntries)
-	}
-}
-
-func ExportTopicComments(topics map[string]map[int]*discourse.TopicData, exportType string) {
-	topicComments := topicMapToTopicComments(topics)
-
-	if exportType == "mysql" {
-		ExportTopicCommentsMySQL(topicComments)
-	} else if exportType == "csv" {
-		ExportTopicCommentsCSV(topicComments)
-	} else if exportType == "json" {
-		ExportTopicCommentsJSON(topicComments)
-	}
-}
-
-func ExportTopicEdits(revisions map[int]map[int]*discourse.PostRevision, exportType string) {
-	topicEdits := topicRevisionMapToTopicEdits(revisions)
-
-	if exportType == "mysql" {
-		ExportTopicEditsMySQL(topicEdits)
-	} else if exportType == "csv" {
-		ExportTopicEditsCSV(topicEdits)
-	} else if exportType == "json" {
-		ExportTopicEditsJSON(topicEdits)
+		ExportJSON(dataToExport, itemsToExport)
 	}
 }
 
