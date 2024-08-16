@@ -13,7 +13,7 @@ apps:
   dscexporter:
     command: dscexporter
     plugs:
-      [network, network-bind]
+      [network, network-bind, home]
 
 parts:
   dscexporter:
