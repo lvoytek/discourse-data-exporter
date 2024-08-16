@@ -24,7 +24,7 @@ func main() {
 		discourseRateLimit     = kingpin.Flag("discourse.rate-limit", "Time in seconds to delay each thread's call to Discourse site").Default("1").Int()
 		dataCollectOnce        = kingpin.Flag("data.collect-once", "Only collect data once then exit.").Default("false").Bool()
 		dataCollectionInterval = kingpin.Flag("data.collection-interval", "Time in seconds to wait before collecting new data from the Discourse site.").Default("3600").Int()
-		exportType             = kingpin.Flag("data.export-type", "How to export the data: csv, json, or mysql").Default("mysql").String()
+		exportType             = kingpin.Flag("data.export-type", "How to export the data: csv, json, or mysql").Default("json").String()
 		mysqlServerURL         = kingpin.Flag("mysql.database-url", "The location of the database to export to in mysql mode.").Default("localhost").String()
 		mysqlUsername          = kingpin.Flag("mysql.username", "The MySQL user to use for inputting data in mysql mode.").String()
 		mysqlPassword          = kingpin.Flag("mysql.password", "The password for the MySQL user to use in mysql mode.").String()
