@@ -267,25 +267,40 @@ func collectTopicEditsFromTopic(discourseClient *discourse.Client, topicID int, 
 	topicPostID := topic.PostStream.Posts[0].ID
 
 	numRevisions, err := discourse.GetNumPostRevisionsByID(discourseClient, topicPostID)
+	time.Sleep(rateLimit)
 
 	if err != nil {
 		log.Println("Number of topic edits data collection error for", topicID, err)
 	}
 
-	// Update revisions by traversing through NextRevision linked list
-	currentRevisionNum := 2
-	for revisionCount := 1; revisionCount < numRevisions; revisionCount++ {
-		nextRevision, err := discourse.GetPostRevisionByID(discourseClient, topicPostID, currentRevisionNum)
+	if numRevisions > 1 {
+
+		// Update revisions by traversing through linked list from latest to first
+		nextRevision, err := discourse.GetPostLatestRevisionByID(discourseClient, topicPostID)
+		time.Sleep(rateLimit)
 
 		if err != nil {
-			log.Println("Topic edits data collection error for", topicID, "revision", currentRevisionNum, err)
-			break
+			log.Println("Topic edits data collection error for", topicID, "revision latest", err)
+		} else {
+			currentRevisionNum := nextRevision.CurrentRevision
+			for {
+				revisions[currentRevisionNum] = nextRevision
+
+				if currentRevisionNum == nextRevision.FirstRevision {
+					break
+				}
+
+				currentRevisionNum = nextRevision.PreviousRevision
+
+				nextRevision, err = discourse.GetPostRevisionByID(discourseClient, topicPostID, currentRevisionNum)
+				time.Sleep(rateLimit)
+
+				if err != nil {
+					log.Println("Topic edits data collection error for", topicID, "revision", currentRevisionNum, err)
+					break
+				}
+			}
 		}
-
-		revisions[currentRevisionNum] = nextRevision
-		currentRevisionNum = nextRevision.NextRevision
-
-		time.Sleep(rateLimit)
 	}
 
 	if len(revisions) > 0 {
