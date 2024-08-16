@@ -23,7 +23,7 @@ func main() {
 		discourseTopic         = kingpin.Flag("discourse.topic", "Limit data collected to this topic ID, overrides discourse.category.").Default("0").Int()
 		discourseRateLimit     = kingpin.Flag("discourse.rate-limit", "Time in seconds to delay each thread's call to Discourse site").Default("1").Int()
 		dataRepeatCollect      = kingpin.Flag("data.repeat-collect", "Continue collecting data once every data.collection-interval time.").Default("false").Bool()
-		dataCollectionInterval = kingpin.Flag("data.collection-interval", "Time in seconds to wait before collecting new data from the Discourse site.").Default("3600").Int()
+		dataCollectionInterval = kingpin.Flag("data.collection-interval", "Time in minutes to wait before collecting new data from the Discourse site.").Default("60").Int()
 		exportType             = kingpin.Flag("data.export-type", "How to export the data: csv, json, or mysql").Default("json").String()
 		mysqlServerURL         = kingpin.Flag("mysql.database-url", "The location of the database to export to in mysql mode.").Default("localhost").String()
 		mysqlUsername          = kingpin.Flag("mysql.username", "The MySQL user to use for inputting data in mysql mode.").String()
@@ -77,7 +77,7 @@ func main() {
 	}
 
 	if *dataRepeatCollect {
-		go IntervalCollectAndExport(discourseClient, *exportType, itemsToExport, time.Duration(*dataCollectionInterval)*time.Second, time.Duration(*discourseRateLimit)*time.Second)
+		go IntervalCollectAndExport(discourseClient, *exportType, itemsToExport, time.Duration(*dataCollectionInterval)*time.Minute, time.Duration(*discourseRateLimit)*time.Second)
 	} else {
 		discourseData := Collect(discourseClient, itemsToExport, time.Duration(*discourseRateLimit)*time.Second)
 		ExportAll(discourseData, *exportType, itemsToExport)

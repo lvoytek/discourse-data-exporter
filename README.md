@@ -40,9 +40,9 @@ To download data from a specific topic, use the `--discourse.topic` option with 
     dscexporter --discourse.site-url https://discourse.ubuntu.com --discourse.topic 29949
 
 ### Continue Collecting Over Time
-By default the exporter runs once and exits. If you want to continue collecting data at a set interval, set the `--data.repeat-collect` flag, and specify an interval in seconds with `--data.collection-interval`. To collect data once every 2 hours indefinitely, run:
+By default the exporter runs once and exits. If you want to continue collecting data at a set interval, set the `--data.repeat-collect` flag, and specify an interval in minutes with `--data.collection-interval`. To collect data once every 2 hours indefinitely, run:
 
-    dscexporter --data.repeat-collect --data.collection-interval 7200
+    dscexporter --data.repeat-collect --data.collection-interval 120
 
 ### Data to Export
 Each dataset that can be exported has an option to either export or skip. If neither option is specified, then you will be prompted after running the command. For example, to specify inclusion of user metadata, run:
