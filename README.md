@@ -3,7 +3,7 @@
 
 Export specific Discourse data for analysis
 
-The easiest way to install and keep dscexporter up to date is through snap:
+The easiest way to install dscexporter is through snap:
 
 ```bash
 sudo snap install dscexporter
@@ -35,7 +35,7 @@ If you want to extract data in a single category, then you can specify it with t
     dscexporter --discourse.site-url https://discourse.ubuntu.com --discourse.category server
 
 ### Topic
-To download data from a specific topic, use the `--discourse.topic` option with the topic's ID. This will override any chosen category when specified. To get data from the [Ubunt Server Reference topic](https://discourse.ubuntu.com/t/ubuntu-server-reference/29949), run:
+To download data from a specific topic, use the `--discourse.topic` option with the topic's ID. This will override any chosen category when specified. To get data from the [Ubuntu Server Reference topic](https://discourse.ubuntu.com/t/ubuntu-server-reference/29949), run:
 
     dscexporter --discourse.site-url https://discourse.ubuntu.com --discourse.topic 29949
 
@@ -45,17 +45,13 @@ By default the exporter runs once and exits. If you want to continue collecting 
     dscexporter --data.repeat-collect --data.collection-interval 120
 
 ### Data to Export
-Each dataset that can be exported has an option to either export or skip. If neither option is specified, then you will be prompted after running the command. For example, to specify inclusion of user metadata, run:
+Each dataset that can be exported has an option to either export or skip. For example, to specify inclusion of user metadata, run:
 
     dscexporter --export.users
 
 To skip user metadata, run:
 
     dscexporter --no-export.users
-
-If neither is specified, the following will show up:
-
-    Export user metadata (y/n):
 
 The possible data to export includes:
 
@@ -67,13 +63,13 @@ The possible data to export includes:
 | Topic Edits | `--export.edits` | `--no-export.edits` |
 
 ### Export Type
-By default, the exporter displays extracted data in JSON format. It can also be exported to MySQL and CSV. Specify the export type with `--data.export-type` and `json`, `mysql`, or `csv`.
+The collected data can be exported to MySQL, CSV, and JSON. Specify the export type with `--data.export-type` and `mysql`, `csv`, or `json`. By default, the exporter displays extracted data in JSON format.
 
 ### MySQL-Specific Options
 When using MySQL mode, the database info can be specified with `--mysql.database-url`, `--mysql.username`, and `--mysql.password`. The database url defaults to `localhost`.
 
 ### CSV-Specific Options
-When using CSV mode, all files will be written to a directory which can be specified with `--csv.foldername`. By default, It creates a folder called `out/` in the current directory. 
+When using CSV mode, all files will be written to a directory which can be specified with `--csv.foldername`. By default, It creates a folder called `out/` in the current directory.
 
 > **Note**:
 > When using the snap, only directories contained within `$HOME` can be specified.
