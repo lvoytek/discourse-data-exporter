@@ -22,11 +22,14 @@ var (
 		Users:      make(map[string]*discourse.TopicParticipant),
 		TopicEdits: make(map[int]map[int]*discourse.PostRevision),
 	}
-	cacheWriteMutex sync.Mutex
+	cacheWriteMutex   sync.Mutex
+	rateLimitMutex    sync.Mutex
+	rateLimitDuration time.Duration = time.Second
 )
 
 func Collect(discourseClient *discourse.Client, itemsToExport ItemsToExport, rateLimit time.Duration) DiscourseCache {
 	var collectorWg sync.WaitGroup
+	rateLimitDuration = rateLimit
 
 	categoryList := []string{itemsToExport.LimitToCategorySlug}
 
@@ -52,11 +55,11 @@ func Collect(discourseClient *discourse.Client, itemsToExport ItemsToExport, rat
 	// Topic Comments and Topic Users
 	if itemsToExport.TopicComments || itemsToExport.TopicEdits {
 		if itemsToExport.LimitToTopicID > 0 {
-			collectTopicAndAssociatedUsers(discourseClient, itemsToExport.LimitToTopicID, rateLimit)
+			collectTopicAndAssociatedUsers(discourseClient, itemsToExport.LimitToTopicID)
 		} else {
 			for _, categorySlug := range categoryList {
 				collectorWg.Add(1)
-				go collectTopicsAndUsersFromCategory(&collectorWg, discourseClient, categorySlug, rateLimit)
+				go collectTopicsAndUsersFromCategory(&collectorWg, discourseClient, categorySlug)
 			}
 
 			collectorWg.Wait()
@@ -79,14 +82,14 @@ func Collect(discourseClient *discourse.Client, itemsToExport ItemsToExport, rat
 			}
 
 			if ok {
-				collectTopicEditsFromTopic(discourseClient, itemsToExport.LimitToTopicID, topicData, rateLimit)
+				collectTopicEditsFromTopic(discourseClient, itemsToExport.LimitToTopicID, topicData)
 			} else {
 				log.Println("Unable to find topic", itemsToExport.LimitToTopicID, "in cache")
 			}
 		} else {
 			for _, categorySlug := range categoryList {
 				collectorWg.Add(1)
-				go collectTopicEditsFromCacheTopicList(&collectorWg, discourseClient, categorySlug, rateLimit)
+				go collectTopicEditsFromCacheTopicList(&collectorWg, discourseClient, categorySlug)
 			}
 
 			collectorWg.Wait()
@@ -96,7 +99,7 @@ func Collect(discourseClient *discourse.Client, itemsToExport ItemsToExport, rat
 	return cache
 }
 
-func collectTopicsAndUsersFromCategory(wg *sync.WaitGroup, discourseClient *discourse.Client, categorySlug string, rateLimit time.Duration) {
+func collectTopicsAndUsersFromCategory(wg *sync.WaitGroup, discourseClient *discourse.Client, categorySlug string) {
 	defer wg.Done()
 	topics, ok := cache.Topics[categorySlug]
 
@@ -129,8 +132,7 @@ func collectTopicsAndUsersFromCategory(wg *sync.WaitGroup, discourseClient *disc
 		}
 
 		page++
-
-		time.Sleep(rateLimit)
+		rateLimitDelay()
 	}
 
 	additionalUsers := map[string]*discourse.TopicParticipant{}
@@ -149,7 +151,7 @@ func collectTopicsAndUsersFromCategory(wg *sync.WaitGroup, discourseClient *disc
 		if err == nil {
 			topics[topicOverview.ID] = updatedTopic
 
-			additionalTopicUsers := getUsersListedInTopic(discourseClient, updatedTopic, rateLimit)
+			additionalTopicUsers := getUsersListedInTopic(discourseClient, updatedTopic)
 
 			for k, v := range additionalTopicUsers {
 				additionalUsers[k] = v
@@ -176,12 +178,12 @@ func collectTopicsAndUsersFromCategory(wg *sync.WaitGroup, discourseClient *disc
 	}
 }
 
-func collectTopicAndAssociatedUsers(discourseClient *discourse.Client, topicID int, rateLimit time.Duration) {
+func collectTopicAndAssociatedUsers(discourseClient *discourse.Client, topicID int) {
 	updatedTopic, err := discourse.GetTopicByID(discourseClient, topicID)
-	time.Sleep(rateLimit)
+	rateLimitDelay()
 
 	if err == nil {
-		additionalUsers := getUsersListedInTopic(discourseClient, updatedTopic, rateLimit)
+		additionalUsers := getUsersListedInTopic(discourseClient, updatedTopic)
 
 		categoryData, err := discourse.ShowCategory(discourseClient, updatedTopic.CategoryID)
 		categoryName := ""
@@ -209,7 +211,7 @@ func collectTopicAndAssociatedUsers(discourseClient *discourse.Client, topicID i
 	}
 }
 
-func getUsersListedInTopic(discourseClient *discourse.Client, topicData *discourse.TopicData, rateLimit time.Duration) map[string]*discourse.TopicParticipant {
+func getUsersListedInTopic(discourseClient *discourse.Client, topicData *discourse.TopicData) map[string]*discourse.TopicParticipant {
 	additionalUsers := map[string]*discourse.TopicParticipant{}
 
 	for _, participant := range topicData.Details.Participants {
@@ -224,7 +226,7 @@ func getUsersListedInTopic(discourseClient *discourse.Client, topicData *discour
 		if !userExistsInCache && !userExistsInAdditional {
 
 			newUser, err := discourse.GetUserByUsername(discourseClient, post.Username)
-			time.Sleep(rateLimit)
+			rateLimitDelay()
 
 			if err != nil {
 				log.Println("Could not find post creator by username ", post.Username, "-", err)
@@ -243,7 +245,7 @@ func getUsersListedInTopic(discourseClient *discourse.Client, topicData *discour
 	return additionalUsers
 }
 
-func collectTopicEditsFromCacheTopicList(wg *sync.WaitGroup, discourseClient *discourse.Client, categorySlug string, rateLimit time.Duration) {
+func collectTopicEditsFromCacheTopicList(wg *sync.WaitGroup, discourseClient *discourse.Client, categorySlug string) {
 	defer wg.Done()
 	topics, ok := cache.Topics[categorySlug]
 
@@ -253,11 +255,11 @@ func collectTopicEditsFromCacheTopicList(wg *sync.WaitGroup, discourseClient *di
 
 	// Get all new edit pages for each topic
 	for topicID, topic := range topics {
-		collectTopicEditsFromTopic(discourseClient, topicID, topic, rateLimit)
+		collectTopicEditsFromTopic(discourseClient, topicID, topic)
 	}
 }
 
-func collectTopicEditsFromTopic(discourseClient *discourse.Client, topicID int, topic *discourse.TopicData, rateLimit time.Duration) {
+func collectTopicEditsFromTopic(discourseClient *discourse.Client, topicID int, topic *discourse.TopicData) {
 	revisions, ok := cache.TopicEdits[topicID]
 
 	if !ok {
@@ -267,7 +269,7 @@ func collectTopicEditsFromTopic(discourseClient *discourse.Client, topicID int, 
 	topicPostID := topic.PostStream.Posts[0].ID
 
 	numRevisions, err := discourse.GetNumPostRevisionsByID(discourseClient, topicPostID)
-	time.Sleep(rateLimit)
+	rateLimitDelay()
 
 	if err != nil {
 		log.Println("Number of topic edits data collection error for", topicID, err)
@@ -277,7 +279,7 @@ func collectTopicEditsFromTopic(discourseClient *discourse.Client, topicID int, 
 
 		// Update revisions by traversing through linked list from latest to first
 		nextRevision, err := discourse.GetPostLatestRevisionByID(discourseClient, topicPostID)
-		time.Sleep(rateLimit)
+		rateLimitDelay()
 
 		if err != nil {
 			log.Println("Topic edits data collection error for", topicID, "revision latest", err)
@@ -293,7 +295,7 @@ func collectTopicEditsFromTopic(discourseClient *discourse.Client, topicID int, 
 				currentRevisionNum = nextRevision.PreviousRevision
 
 				nextRevision, err = discourse.GetPostRevisionByID(discourseClient, topicPostID, currentRevisionNum)
-				time.Sleep(rateLimit)
+				rateLimitDelay()
 
 				if err != nil {
 					log.Println("Topic edits data collection error for", topicID, "revision", currentRevisionNum, err)
@@ -308,4 +310,10 @@ func collectTopicEditsFromTopic(discourseClient *discourse.Client, topicID int, 
 		defer cacheWriteMutex.Unlock()
 		cache.TopicEdits[topicID] = revisions
 	}
+}
+
+func rateLimitDelay() {
+	rateLimitMutex.Lock()
+	defer rateLimitMutex.Unlock()
+	time.Sleep(rateLimitDuration)
 }
