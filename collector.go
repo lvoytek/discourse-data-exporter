@@ -36,6 +36,7 @@ func Collect(discourseClient *discourse.Client, itemsToExport ItemsToExport, rat
 	// Get all categories if no category or topic specified
 	if itemsToExport.LimitToCategorySlug == "" && itemsToExport.LimitToTopicID == 0 {
 		allCategories, err := discourse.ListCategories(discourseClient, true)
+		rateLimitDelay()
 
 		if err != nil {
 			log.Fatalln("Unable to list categories -", err)
@@ -112,6 +113,7 @@ func collectTopicsAndUsersFromCategory(wg *sync.WaitGroup, discourseClient *disc
 	newTopics := []discourse.SuggestedTopic{}
 	for {
 		categoryData, err := discourse.GetCategoryContentsBySlug(discourseClient, categorySlug, page)
+		rateLimitDelay()
 
 		if err != nil {
 			log.Println("Category data collection error for", categorySlug, "on page", page, "-", err)
@@ -132,7 +134,6 @@ func collectTopicsAndUsersFromCategory(wg *sync.WaitGroup, discourseClient *disc
 		}
 
 		page++
-		rateLimitDelay()
 	}
 
 	additionalUsers := map[string]*discourse.TopicParticipant{}
@@ -147,6 +148,7 @@ func collectTopicsAndUsersFromCategory(wg *sync.WaitGroup, discourseClient *disc
 
 		// Get a new copy of the topic
 		updatedTopic, err := discourse.GetTopicByID(discourseClient, topicOverview.ID)
+		rateLimitDelay()
 
 		if err == nil {
 			topics[topicOverview.ID] = updatedTopic
@@ -186,6 +188,8 @@ func collectTopicAndAssociatedUsers(discourseClient *discourse.Client, topicID i
 		additionalUsers := getUsersListedInTopic(discourseClient, updatedTopic)
 
 		categoryData, err := discourse.ShowCategory(discourseClient, updatedTopic.CategoryID)
+		rateLimitDelay()
+
 		categoryName := ""
 
 		if err != nil {
