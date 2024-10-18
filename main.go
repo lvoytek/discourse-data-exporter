@@ -77,19 +77,19 @@ func main() {
 	}
 
 	if *dataRepeatCollect {
-		go IntervalCollectAndExport(discourseClient, *exportType, itemsToExport, time.Duration(*dataCollectionInterval)*time.Minute, time.Duration(*discourseRateLimit)*time.Second)
+		for {
+			go IntervalCollectAndExport(discourseClient, *exportType, itemsToExport, time.Duration(*discourseRateLimit)*time.Second)
+			time.Sleep(time.Duration(*dataCollectionInterval) * time.Minute)
+		}
 	} else {
 		discourseData := Collect(discourseClient, itemsToExport, time.Duration(*discourseRateLimit)*time.Second)
 		ExportAll(discourseData, *exportType, itemsToExport)
 	}
 }
 
-func IntervalCollectAndExport(discourseClient *discourse.Client, exportType string, itemsToExport ItemsToExport, interval time.Duration, rateLimit time.Duration) {
-	for {
-		discourseData := Collect(discourseClient, itemsToExport, rateLimit)
-		ExportAll(discourseData, exportType, itemsToExport)
-		time.Sleep(interval)
-	}
+func IntervalCollectAndExport(discourseClient *discourse.Client, exportType string, itemsToExport ItemsToExport, rateLimit time.Duration) {
+	discourseData := Collect(discourseClient, itemsToExport, rateLimit)
+	ExportAll(discourseData, exportType, itemsToExport)
 }
 
 func promptBool(prompt string) bool {
